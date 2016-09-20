@@ -713,6 +713,7 @@ class ObjectMgr
         // used in .npc add/.gobject add commands for adding static spawns
         uint32 GenerateStaticCreatureLowGuid() { if (m_StaticCreatureGuids.GetNextAfterMaxUsed() >= m_FirstTemporaryCreatureGuid) return 0; return m_StaticCreatureGuids.Generate(); }
         uint32 GenerateStaticGameObjectLowGuid() { if (m_StaticGameObjectGuids.GetNextAfterMaxUsed() >= m_FirstTemporaryGameObjectGuid) return 0; return m_StaticGameObjectGuids.Generate(); }
+        uint32 GenerateDynamicCreatureLowGuid() { return m_dynamicCreatureGuids.Generate(); }
 
         uint32 GeneratePlayerLowGuid() { return m_CharGuids.Generate(); }
         uint32 GenerateItemLowGuid() { return m_ItemGuids.Generate(); }
@@ -1033,6 +1034,9 @@ class ObjectMgr
         // guids from reserved range for use in .npc add/.gobject add commands for adding new static spawns (saved in DB) from client.
         ObjectGuidGenerator<HIGHGUID_UNIT>        m_StaticCreatureGuids;
         ObjectGuidGenerator<HIGHGUID_GAMEOBJECT>  m_StaticGameObjectGuids;
+
+        // dynamic guids
+        ObjectGuidGenerator<HIGHGUID_UNIT>        m_dynamicCreatureGuids;
 
         // first free low guid for selected guid type
         ObjectGuidGenerator<HIGHGUID_PLAYER>     m_CharGuids;

@@ -145,9 +145,9 @@ class MANGOS_DLL_SPEC Object
             m_inWorld = false;
         }
 
-        ObjectGuid const& GetObjectGuid() const { return GetGuidValue(OBJECT_FIELD_GUID); }
-        const uint64& GetGUID() const { return GetUInt64Value(OBJECT_FIELD_GUID); } // DEPRECATED, not use, will removed soon
-        uint32 GetGUIDLow() const { return GetObjectGuid().GetCounter(); }
+        ObjectGuid const& GetObjectGuid() const { return m_objectGuid; }
+        uint32 GetGUIDLow() const { return GetObjectGuid().GetCounter(); }      // should be used with all communication with client
+        uint32 GetDBLowGUID() const { return GetObjectGuid().GetDbLowGuid(); }  // should be used with all communication with DB
         PackedGuid const& GetPackGUID() const { return m_PackGUID; }
         std::string GetGuidStr() const { return GetObjectGuid().GetString(); }
 
@@ -371,7 +371,9 @@ class MANGOS_DLL_SPEC Object
         Object();
 
         void _InitValues();
-        void _Create(uint32 guidlow, uint32 entry, HighGuid guidhigh);
+
+        // Create the needed ObjectGuid and initialize the object fields. Should be called for each object
+        void _Create(uint32 guidlow, uint32 entry, HighGuid guidhigh, uint32 dynamicGuid = 0);
 
         virtual void _SetUpdateBits(UpdateMask* updateMask, Player* target) const;
 
@@ -404,7 +406,7 @@ class MANGOS_DLL_SPEC Object
         bool m_itsNewObject;
 
         PackedGuid m_PackGUID;
-
+        ObjectGuid m_objectGuid;
         Object(const Object&);                              // prevent generation copy constructor
         Object& operator=(Object const&);                   // prevent generation assigment operator
 

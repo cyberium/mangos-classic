@@ -169,7 +169,7 @@ void Creature::CleanupsBeforeDelete()
 
 void Creature::AddToWorld()
 {
-    ///- Register the creature for guid lookup
+    ///- Register the creature for guid lookup (using dynamic guid here)
     if (!IsInWorld() && GetObjectGuid().GetHigh() == HIGHGUID_UNIT)
         GetMap()->GetObjectsStore().insert<Creature>(GetObjectGuid(), (Creature*)this);
 
@@ -501,6 +501,13 @@ void Creature::Update(uint32 update_diff, uint32 diff)
             if (m_respawnTime <= time(nullptr) && (!m_isSpawningLinked || GetMap()->GetCreatureLinkingHolder()->CanSpawn(this)))
             {
                 DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "Respawning...");
+
+                CreatureInfo const* cinfo = GetCreatureInfo();
+
+                RemoveFromWorld();
+                Object::_Create(GetObjectGuid().GetDbLowGuid(), cinfo->Entry, cinfo->GetHighGuid(), sObjectMgr.GenerateDynamicCreatureLowGuid());
+                AddToWorld();
+
                 m_respawnTime = 0;
                 m_aggroDelay = sWorld.getConfig(CONFIG_UINT32_CREATURE_RESPAWN_AGGRO_DELAY);
                 delete loot;
@@ -515,8 +522,6 @@ void Creature::Update(uint32 update_diff, uint32 diff)
                     GameEventCreatureData const* eventData = sGameEventMgr.GetCreatureUpdateDataForActiveEvent(GetGUIDLow());
                     UpdateEntry(m_originalEntry, TEAM_NONE, nullptr, eventData);
                 }
-
-                CreatureInfo const* cinfo = GetCreatureInfo();
 
                 SelectLevel();
                 UpdateAllStats();  // to be sure stats is correct regarding level of the creature
@@ -1395,7 +1400,7 @@ bool Creature::CreateFromProto(uint32 guidlow, CreatureInfo const* cinfo, Team t
 {
     m_originalEntry = cinfo->Entry;
 
-    Object::_Create(guidlow, cinfo->Entry, cinfo->GetHighGuid());
+    Object::_Create(guidlow, cinfo->Entry, cinfo->GetHighGuid(), sObjectMgr.GenerateDynamicCreatureLowGuid());
 
     if (!UpdateEntry(cinfo->Entry, team, data, eventData, false))
         return false;
@@ -2055,9 +2060,8 @@ bool Creature::IsOutOfThreatArea(Unit* pVictim) const
 
 CreatureDataAddon const* Creature::GetCreatureAddon() const
 {
-    if (!(GetObjectGuid().GetHigh() == HIGHGUID_PET)) // pets have guidlow that is conflicting with normal guidlows hence GetGUIDLow() gives wrong info
-        if (CreatureDataAddon const* addon = ObjectMgr::GetCreatureAddon(GetGUIDLow()))
-            return addon;
+   if (CreatureDataAddon const* addon = ObjectMgr::GetCreatureAddon(GetDBLowGUID()))
+        return addon;
 
     return ObjectMgr::GetCreatureTemplateAddon(GetCreatureInfo()->Entry);
 }

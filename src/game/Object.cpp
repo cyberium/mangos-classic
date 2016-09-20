@@ -83,15 +83,16 @@ void Object::_InitValues()
     m_objectUpdated = false;
 }
 
-void Object::_Create(uint32 guidlow, uint32 entry, HighGuid guidhigh)
+void Object::_Create(uint32 lowGuid, uint32 entry, HighGuid highGuid, uint32 dynamicGuid /*= 0*/)
 {
     if (!m_uint32Values)
         _InitValues();
 
-    ObjectGuid guid = ObjectGuid(guidhigh, entry, guidlow);
-    SetGuidValue(OBJECT_FIELD_GUID, guid);
+    m_objectGuid = ObjectGuid(highGuid, entry, lowGuid, dynamicGuid);
+
+    SetGuidValue(OBJECT_FIELD_GUID, m_objectGuid);
     SetUInt32Value(OBJECT_FIELD_TYPE, m_objectType);
-    m_PackGUID.Set(guid);
+    m_PackGUID.Set(m_objectGuid);
 }
 
 void Object::SetObjectScale(float newScale)
