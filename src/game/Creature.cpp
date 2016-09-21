@@ -2060,8 +2060,11 @@ bool Creature::IsOutOfThreatArea(Unit* pVictim) const
 
 CreatureDataAddon const* Creature::GetCreatureAddon() const
 {
-   if (CreatureDataAddon const* addon = ObjectMgr::GetCreatureAddon(GetDBLowGUID()))
-        return addon;
+    if (!IsPet())   // For pets GetDbLowGUID will return petnumber TODO: are there case when specific pet should have specific addon?
+    {
+        if (CreatureDataAddon const* addon = ObjectMgr::GetCreatureAddon(GetDBLowGUID()))
+            return addon;
+    }
 
     return ObjectMgr::GetCreatureTemplateAddon(GetCreatureInfo()->Entry);
 }
