@@ -1922,6 +1922,8 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
 
         CombatData* m_combatData;
 
+        float GetAttackDistance(Unit const* pl) const;
+
     protected:
         explicit Unit();
 
