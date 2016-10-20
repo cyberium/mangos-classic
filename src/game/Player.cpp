@@ -1506,8 +1506,11 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
 
     MapEntry const* mEntry = sMapStore.LookupEntry(mapid);  // Validity checked in IsValidMapCoord
 
-    // preparing unsummon pet if lost (we must get pet before teleportation or will not find it later)
-    Pet* pet = GetPet();
+    // do not let charmed players/creatures teleport
+    if (isCharmed())
+        return false;
+
+    Unit* charm = GetCharm();
 
     // don't let enter battlegrounds without assigned battleground id (for example through areatrigger)...
     // don't let gm level > 1 either
@@ -1571,6 +1574,11 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
 
         if (!(options & TELE_TO_NOT_UNSUMMON_PET))
         {
+            Unit* charm = GetCharm();
+            if (charm && !charm->IsWithinDist3d(x, y, z, GetMap()->GetVisibilityDistance()))
+                Uncharm();
+
+            Pet* pet = GetPet();
             // same map, only remove pet if out of range for new position
             if (pet && !pet->IsWithinDist3d(x, y, z, GetMap()->GetVisibilityDistance()))
                 UnsummonPetTemporaryIfAny();
@@ -1636,8 +1644,12 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
                     LeaveBattleground(false);               // don't teleport to entry point
             }
 
+            // remove charm on map change
+            if (GetCharm())
+                Uncharm();
+
             // remove pet on map change
-            if (pet)
+            if (GetPet())
                 UnsummonPetTemporaryIfAny();
 
             // remove all dyn objects
