@@ -69,6 +69,9 @@ void TargetedMovementGeneratorMedium<T, D>::_setTargetLocation(T& owner, bool up
         z = end.z;
     }
 
+    if (this->GetMovementGeneratorType() == FOLLOW_MOTION_TYPE)
+        _updateSpeed(owner, true);
+
     if (!i_path)
         i_path = new PathFinder(&owner);
 
@@ -271,21 +274,50 @@ bool FollowMovementGenerator<Player>::EnableWalking() const
 }
 
 template<>
-void FollowMovementGenerator<Player>::_updateSpeed(Player& /*u*/)
+void FollowMovementGenerator<Player>::_updateSpeed(Player& /*u*/, bool adjustSpeed /*= false*/)
 {
     // nothing to do for Player
 }
 
 template<>
-void FollowMovementGenerator<Creature>::_updateSpeed(Creature& u)
+void FollowMovementGenerator<Creature>::_updateSpeed(Creature& u, bool adjustSpeed /*= false*/)
 {
     // pet only sync speed with owner
     if (!((Creature&)u).IsPet() || !i_target.isValid() || i_target->GetObjectGuid() != u.GetOwnerGuid())
         return;
 
-    u.UpdateSpeed(MOVE_RUN, true);
-    u.UpdateSpeed(MOVE_WALK, true);
-    u.UpdateSpeed(MOVE_SWIM, true);
+    if (adjustSpeed)
+    {
+        // compute pet speed if need
+        Unit* owner = i_target.getTarget();
+        float ownerDist = owner->GetDistance(&u);
+        int32 farDist = int32(ownerDist - PET_FOLLOW_DIST);
+        if (farDist > 0)
+        {
+            // pet is a bit too far lets speed up it a bit
+            float speedRatio = 0.0f;
+            if (farDist > 50)
+                speedRatio = 3.0f;
+            else
+                speedRatio = 1.0f + (farDist / 50.0f);
+
+            // round that value to not have too much change
+            speedRatio = round(speedRatio * 10.0f) / 10.0f;
+
+            float runRate = owner->GetSpeedRate(MOVE_RUN) * speedRatio;
+            float walkRate = owner->GetSpeedRate(MOVE_WALK) * speedRatio;
+            float swimRate = owner->GetSpeedRate(MOVE_SWIM) * speedRatio;
+            u.UpdateSpeed(MOVE_RUN, true, runRate);
+            u.UpdateSpeed(MOVE_WALK, true, walkRate);
+            u.UpdateSpeed(MOVE_SWIM, true, swimRate);
+        }
+    }
+    else
+    {
+        u.UpdateSpeed(MOVE_RUN, true);
+        u.UpdateSpeed(MOVE_WALK, true);
+        u.UpdateSpeed(MOVE_SWIM, true);
+    }
 }
 
 template<>
@@ -360,6 +392,8 @@ template bool TargetedMovementGeneratorMedium<Player, ChaseMovementGenerator<Pla
 template bool TargetedMovementGeneratorMedium<Player, FollowMovementGenerator<Player> >::IsReachable() const;
 template bool TargetedMovementGeneratorMedium<Creature, ChaseMovementGenerator<Creature> >::IsReachable() const;
 template bool TargetedMovementGeneratorMedium<Creature, FollowMovementGenerator<Creature> >::IsReachable() const;
+template void TargetedMovementGeneratorMedium<Creature, FollowMovementGenerator<Creature> >::_updateSpeed(Creature& u, bool adjustSpeed /*= false*/);
+template void TargetedMovementGeneratorMedium<Player, FollowMovementGenerator<Player> >::_updateSpeed(Player& u, bool adjustSpeed /*= false*/);
 
 template void ChaseMovementGenerator<Player>::_clearUnitStateMove(Player& u);
 template void ChaseMovementGenerator<Creature>::_addUnitStateMove(Creature& u);

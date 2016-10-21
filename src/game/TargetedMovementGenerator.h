@@ -62,6 +62,7 @@ class MANGOS_DLL_SPEC TargetedMovementGeneratorMedium
         void _setTargetLocation(T&, bool updateDestination);
         bool RequiresNewPosition(T& owner, float x, float y, float z) const;
         virtual float GetDynamicTargetDistance(T& /*owner*/, bool /*forRangeCheck*/) const { return i_offset; }
+        virtual void _updateSpeed(T& u, bool adjustSpeed = false) {};
 
         ShortTimeTracker i_recheckDistance;
         float i_offset;
@@ -108,6 +109,7 @@ class MANGOS_DLL_SPEC FollowMovementGenerator : public TargetedMovementGenerator
             : TargetedMovementGeneratorMedium<T, FollowMovementGenerator<T> >(target, offset, angle) {}
         ~FollowMovementGenerator() {}
 
+
         MovementGeneratorType GetMovementGeneratorType() const override { return FOLLOW_MOTION_TYPE; }
 
         void Initialize(T&);
@@ -121,11 +123,9 @@ class MANGOS_DLL_SPEC FollowMovementGenerator : public TargetedMovementGenerator
         bool _lostTarget(T&) const { return false; }
         void _reachTarget(T&) {}
 
-    private:
-        void _updateSpeed(T& u);
-
     protected:
         float GetDynamicTargetDistance(T& owner, bool forRangeCheck) const override;
+        virtual void _updateSpeed(T& u, bool adjustSpeed = false) override;
 };
 
 #endif
