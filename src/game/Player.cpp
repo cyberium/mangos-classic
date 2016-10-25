@@ -1506,8 +1506,9 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
 
     MapEntry const* mEntry = sMapStore.LookupEntry(mapid);  // Validity checked in IsValidMapCoord
 
-    // preparing unsummon pet if lost (we must get pet before teleportation or will not find it later)
-    Pet* pet = GetPet();
+    // do not let charmed players/creatures teleport
+    if (isCharmed())
+        return false;
 
     // don't let enter battlegrounds without assigned battleground id (for example through areatrigger)...
     // don't let gm level > 1 either
@@ -1553,6 +1554,33 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
     m_movementInfo.SetMovementFlags(MOVEFLAG_NONE);
     DisableSpline();
 
+    if (!(options & TELE_TO_NOT_UNSUMMON_PET) || GetMapId() != mapid)
+    {
+        if (GetMapId() == mapid)
+        {
+            if (Unit* charm = GetCharm())
+            {
+                if (!charm->IsWithinDist3d(x, y, z, GetMap()->GetVisibilityDistance()))
+                    Uncharm();
+            }
+
+            if (Pet* pet = GetPet())
+            {
+                // same map, only remove pet if out of range for new position
+                if (!pet->IsWithinDist3d(x, y, z, GetMap()->GetVisibilityDistance()))
+                    UnsummonPetTemporaryIfAny();
+            }
+        }
+        else
+        {
+            if (Unit* charm = GetCharm())
+                Uncharm();
+
+            if (Pet* pet = GetPet())
+                UnsummonPetTemporaryIfAny();
+        }
+    }
+
     if ((GetMapId() == mapid) && (!m_transport))            // TODO the !m_transport might have unexpected effects when teleporting from transport to other place on same map
     {
         // lets reset far teleport flag if it wasn't reset during chained teleports
@@ -1567,13 +1595,6 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
             m_teleport_dest = WorldLocation(mapid, x, y, z, orientation);
             m_teleport_options = options;
             return true;
-        }
-
-        if (!(options & TELE_TO_NOT_UNSUMMON_PET))
-        {
-            // same map, only remove pet if out of range for new position
-            if (pet && !pet->IsWithinDist3d(x, y, z, GetMap()->GetVisibilityDistance()))
-                UnsummonPetTemporaryIfAny();
         }
 
         if (!(options & TELE_TO_NOT_LEAVE_COMBAT))
@@ -1635,10 +1656,6 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
                 if (bg->GetMapId() != mapid)
                     LeaveBattleground(false);               // don't teleport to entry point
             }
-
-            // remove pet on map change
-            if (pet)
-                UnsummonPetTemporaryIfAny();
 
             // remove all dyn objects
             RemoveAllDynObjects();
@@ -15774,11 +15791,7 @@ void Player::CharmSpellInitialize()
     WorldPacket data(SMSG_PET_SPELLS, 8 + 4 + 1 + 1 + 2 + 4 * MAX_UNIT_ACTION_BAR_INDEX + 1 + 4 * addlist + 1);
     data << charm->GetObjectGuid();
     data << uint32(0x00000000);
-
-    if (charm->GetTypeId() != TYPEID_PLAYER)
-        data << uint8(charmInfo->GetReactState()) << uint8(charmInfo->GetCommandState()) << uint16(0);
-    else
-        data << uint8(0) << uint8(0) << uint16(0);
+    data << uint8(charmInfo->GetReactState()) << uint8(charmInfo->GetCommandState()) << uint16(0);
 
     charmInfo->BuildActionBar(&data);
 
@@ -16118,6 +16131,9 @@ bool Player::ActivateTaxiPathTo(std::vector<uint32> const& nodes, Creature* npc 
     }
 
     // Prepare to flight start now
+
+    // temporary remove pet
+    UnsummonPetTemporaryIfAny();
 
     // stop combat at start taxi flight if any
     CombatStop();
@@ -18625,6 +18641,20 @@ void Player::UnsummonPetIfAny()
         return;
  
     pet->Unsummon(PET_SAVE_NOT_IN_SLOT, this);
+}
+
+bool Player::IsPetNeedBeTemporaryUnsummoned() const
+{
+    if (!IsInWorld() || !isAlive())
+        return true;
+
+    if (sWorld.getConfig(CONFIG_BOOL_PET_UNSUMMON_AT_MOUNT) && IsMounted())
+        return true;
+
+    if (hasUnitState(UNIT_STAT_TAXI_FLIGHT))
+        return true;
+
+    return false;
 }
 
 void Player::ResummonPetTemporaryUnSummonedIfAny()

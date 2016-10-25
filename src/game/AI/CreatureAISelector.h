@@ -20,13 +20,14 @@
 #define MANGOS_CREATUREAISELECTOR_H
 
 class CreatureAI;
+class Unit;
 class Creature;
 class MovementGenerator;
 
 namespace FactorySelector
 {
     CreatureAI* selectAI(Creature*);
-    CreatureAI* GetPossessAI(Creature*);
+    CreatureAI* GetSpecificAI(Unit* unit, std::string const& ainame);
     MovementGenerator* selectMovementGenerator(Creature*);
 }
 #endif
