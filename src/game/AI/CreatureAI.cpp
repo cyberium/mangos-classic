@@ -155,7 +155,7 @@ void CreatureAI::SetCombatMovement(bool enable, bool stopOrStartMovement /*=fals
     {
         if (enable)
             m_creature->GetMotionMaster()->MoveChase(m_creature->getVictim(), m_attackDistance, m_attackAngle);
-        else if (!enable && m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE)
+        else if (m_creature->GetMotionMaster()->GetCurrentMovementGeneratorType() == CHASE_MOTION_TYPE)
             m_creature->StopMoving();
     }
 }

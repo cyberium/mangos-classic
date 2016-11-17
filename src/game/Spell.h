@@ -347,8 +347,8 @@ class Spell
 
         void DoCreateItem(SpellEffectIndex eff_idx, uint32 itemtype);
 
-        void WriteSpellGoTargets(WorldPacket* data);
-        void WriteAmmoToPacket(WorldPacket* data);
+        void WriteSpellGoTargets(WorldPacket& data);
+        void WriteAmmoToPacket(WorldPacket& data);
 
         template<typename T> WorldObject* FindCorpseUsing();
 
@@ -378,6 +378,7 @@ class Spell
         Item* m_CastItem;
 
         SpellCastTargets m_targets;
+        bool m_ignoreHitResult;
 
         int32 GetCastTime() const { return m_casttime; }
         uint32 GetCastedTime() { return m_timer; }

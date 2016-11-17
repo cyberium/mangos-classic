@@ -28,6 +28,7 @@
 #include "InstanceData.h"
 #include "Chat.h"
 #include "Language.h"
+#include "../TemporarySummon.h"
 
 bool CreatureEventAIHolder::UpdateRepeatTimer(Creature* creature, uint32 repeatMin, uint32 repeatMax)
 {
@@ -122,7 +123,14 @@ CreatureEventAI::CreatureEventAI(Creature* c) : CreatureAI(c),
         }
     }
     else
-        sLog.outErrorEventAI("EventMap for Creature %u is empty but creature is using CreatureEventAI.", m_creature->GetEntry());
+    {
+        std::string aiName = m_creature->GetAIName();
+        if (aiName == "EventAI") // don't show error on GuardiansAI
+        {
+            sLog.outErrorEventAI("EventMap for Creature Id: %u, %s is empty but creature is using CreatureEventAI: '%s'.",
+                m_creature->GetEntry(), m_creature->GetGuidStr().c_str(), aiName.c_str());
+        }
+    }
 }
 
 bool CreatureEventAI::IsTimerBasedEvent(EventAI_Type type)
@@ -1031,7 +1039,6 @@ void CreatureEventAI::ProcessAction(CreatureEventAI_Action const& action, uint32
         {
             // only set this on spawn event for now (need more implementation to set it in another place)
             m_reactState = ReactStates(action.setReactState.reactState);
-            sLog.outString("Set AI react state to %u for %s", uint32(m_reactState), m_creature->GetGuidStr().c_str());
             break;
         }
         default:
@@ -1290,10 +1297,7 @@ void CreatureEventAI::MoveInLineOfSight(Unit* who)
         if (m_creature->IsWithinDistInMap(who, attackRadius) && m_creature->IsWithinLOSInMap(who))
         {
             if (!m_creature->getVictim())
-            {
                 AttackStart(who);
-                who->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
-            }
             else if (m_creature->GetMap()->IsDungeon())
             {
                 m_creature->AddThreat(who);
@@ -1462,6 +1466,16 @@ inline Unit* CreatureEventAI::GetTargetByType(uint32 Target, Unit* pActionInvoke
             if (!pAIEventSender)
                 isError = true;
             return pAIEventSender;
+        case TARGET_T_SUMMONER:
+        {
+            if (TemporarySummon* summon = dynamic_cast<TemporarySummon*>(m_creature))
+                return summon->GetSummoner();
+            else
+            {
+                isError = true;
+                return nullptr;
+            }
+        }
         default:
             isError = true;
             return nullptr;
