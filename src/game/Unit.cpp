@@ -7404,6 +7404,7 @@ bool Unit::IsSecondChoiceTarget(Unit* pTarget, bool checkThreatArea)
     MANGOS_ASSERT(pTarget && GetTypeId() == TYPEID_UNIT);
 
     return
+        pTarget->GetCharmerGuid() == GetObjectGuid() ||
         pTarget->IsImmuneToDamage(GetMeleeDamageSchoolMask()) ||
         pTarget->hasNegativeAuraWithInterruptFlag(AURA_INTERRUPT_FLAG_DAMAGE) ||
         (checkThreatArea && ((Creature*)this)->IsOutOfThreatArea(pTarget));
@@ -9764,6 +9765,7 @@ bool Unit::TakeCharmOf(Unit* charmed)
     charmed->AttackStop(true, true);
     charmed->ClearInCombat();
 
+    charmed->addUnitState(UNIT_STAT_CONTROLLED);
     charmed->SetCharmerGuid(GetObjectGuid());
     charmed->CastStop();
     SetCharm(charmed);
@@ -9939,6 +9941,9 @@ void Unit::ResetControlState(bool attackCharmer /*= true*/)
     }
     else if (possessed->GetTypeId() == TYPEID_PLAYER)
     {
+        possessed->AttackStop(true, true);
+        possessed->m_Events.KillAllEvents(true);
+
         Player* possessedPlayer = static_cast<Player *>(possessed);
 
         if (player && player->IsInDuelWith(possessedPlayer))
