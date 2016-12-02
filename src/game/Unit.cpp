@@ -7239,6 +7239,27 @@ void Unit::SetDeathState(DeathState s)
     m_deathState = s;
 }
 
+// Check if this unit is controlled by provided controller or by one of its friendly faction
+bool Unit::IsUnderConttrollBy(Unit const& controller) const
+{
+    if (!hasUnitState(UNIT_STAT_CONTROLLED))
+        return false;
+
+    if (GetCharmerGuid() == controller.GetObjectGuid())
+        return true;
+
+    // also check if this unit is controlled by another creature from friendly faction
+    if (Unit const* charmer = GetCharmer())
+    {
+        FactionTemplateEntry const* charmerFactionEntry = charmer->getFactionTemplateEntry();
+        FactionTemplateEntry const* controllerFactionEntry = controller.getFactionTemplateEntry();
+        if (controllerFactionEntry && charmerFactionEntry && !controllerFactionEntry->IsHostileTo(*controllerFactionEntry))
+            return true;
+    }
+
+    return false;
+}
+
 /*########################################
 ########                          ########
 ########       AGGRO SYSTEM       ########
@@ -7404,7 +7425,7 @@ bool Unit::IsSecondChoiceTarget(Unit* pTarget, bool checkThreatArea)
     MANGOS_ASSERT(pTarget && GetTypeId() == TYPEID_UNIT);
 
     return
-        pTarget->GetCharmerGuid() == GetObjectGuid() ||
+        pTarget->hasUnitState(UNIT_STAT_CONTROLLED) && pTarget->IsUnderConttrollBy(*this) ||
         pTarget->IsImmuneToDamage(GetMeleeDamageSchoolMask()) ||
         pTarget->hasNegativeAuraWithInterruptFlag(AURA_INTERRUPT_FLAG_DAMAGE) ||
         (checkThreatArea && ((Creature*)this)->IsOutOfThreatArea(pTarget));
