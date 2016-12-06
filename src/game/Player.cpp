@@ -15671,6 +15671,9 @@ void Player::SetFFAPvP(bool state)
     else
         RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_FFA_PVP);
 
+    ForceHealAndPowerUpdateInZone();
+    ForceHealthAndPowerUpdate();
+
     if (GetGroup())
         SetGroupUpdateFlag(GROUP_UPDATE_FLAG_STATUS);
 }
@@ -19066,4 +19069,16 @@ void Player::DoInteraction(ObjectGuid const& interactObjGuid)
         RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_USE);
     }
     SendForcedObjectUpdate();
+}
+
+void Player::ForceHealAndPowerUpdateInZone()
+{
+    for (auto guid : m_clientGUIDs)
+    {
+        if (guid.IsUnit())
+        {
+            if (auto unit = GetMap()->GetUnit(guid))
+                unit->ForceHealthAndPowerUpdate();
+        }
+    }
 }
