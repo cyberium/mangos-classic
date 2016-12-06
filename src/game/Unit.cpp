@@ -9795,6 +9795,7 @@ bool Unit::TakeCharmOf(Unit* charmed)
 
     if (charmed->GetTypeId() == TYPEID_PLAYER)
     {
+        charmed->CombatStop(true);
         Player* charmedPlayer = static_cast<Player *>(charmed);
         if (charmerPlayer && charmerPlayer->IsInDuelWith(charmedPlayer))
             charmedPlayer->SetUInt32Value(PLAYER_DUEL_TEAM, charmerPlayer->GetUInt32Value(PLAYER_DUEL_TEAM));
@@ -9962,7 +9963,7 @@ void Unit::ResetControlState(bool attackCharmer /*= true*/)
     }
     else if (possessed->GetTypeId() == TYPEID_PLAYER)
     {
-        possessed->AttackStop(true, true);
+        possessed->CombatStop(true);
         possessed->m_Events.KillAllEvents(true);
 
         Player* possessedPlayer = static_cast<Player *>(possessed);
