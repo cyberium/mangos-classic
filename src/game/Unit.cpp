@@ -9812,7 +9812,7 @@ bool Unit::TakeCharmOf(Unit* charmed)
         charmInfo->SetIsRetreating(true);
 
         charmedPlayer->SetClientControl(charmedPlayer, 0);
-        charmedPlayer->SendForcedObjectUpdate();
+        charmedPlayer->ForceHealAndPowerUpdateInZone();
     }
     else if (charmed->GetTypeId() == TYPEID_UNIT)
     {
@@ -9878,6 +9878,7 @@ void Unit::ResetControlState(bool attackCharmer /*= true*/)
             player->GetCamera().ResetView();
             player->SetClientControl(player, player->IsClientControl(player));
             player->SetMover(nullptr);
+            player->ForceHealAndPowerUpdateInZone();
         }
         return;
     }
@@ -9977,6 +9978,8 @@ void Unit::ResetControlState(bool attackCharmer /*= true*/)
         charmInfo->ResetCharmState();
         possessedPlayer->DeleteCharmInfo();
 
+        possessedPlayer->ForceHealAndPowerUpdateInZone();
+
         while (possessedPlayer->GetMotionMaster()->GetCurrentMovementGeneratorType() == FOLLOW_MOTION_TYPE)
             possessedPlayer->GetMotionMaster()->MovementExpired(true);
     }
@@ -9995,6 +9998,8 @@ void Unit::ResetControlState(bool attackCharmer /*= true*/)
             player->RemovePetActionBar();
         else
             player->PetSpellInitialize();   // reset spell on pet bar
+
+        player->ForceHealAndPowerUpdateInZone();
     }
 
     // be sure all those change will be made for clients
