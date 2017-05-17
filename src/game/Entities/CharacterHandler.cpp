@@ -40,7 +40,7 @@
 #include "Spells/SpellMgr.h"
 
 // ------ Playerbot mod ------ //
-#include "playerbot/PlayerbotMgr.h"
+#include "Playerbot/Base/PlayerbotMgr.h"
 
 // config option SkipCinematics supported values
 enum CinematicsSkipMode

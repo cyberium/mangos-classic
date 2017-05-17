@@ -44,8 +44,8 @@
 #include <cstdarg>
 
 // ------ Playerbot mod ------ //
-#include "playerbot/PlayerbotMgr.h"
-#include "playerbot/PlayerbotAI.h"
+#include "Playerbot/Base/PlayerbotMgr.h"
+#include "Playerbot/Base/PlayerbotAI.h"
 // ---- End Playerbot mod ---- //
 
 // select opcodes appropriate for processing in Map::Update context for current session state

@@ -30,7 +30,7 @@
 #include "Maps/MapManager.h"
 #include "Maps/MapPersistentStateMgr.h"
 // ------ Playerbot mod ------ //
-#include "playerbot/PlayerbotMgr.h"
+#include "Playerbot/Base/PlayerbotMgr.h"
 
 GroupMemberStatus GetGroupMemberStatus(const Player *member = nullptr)
 {
