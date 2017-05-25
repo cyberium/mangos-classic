@@ -61,7 +61,7 @@ endif()
 
 if(NOT BUILD_PLAYERBOT)
   # exclude Playerbot folder
-  set (EXCLUDE_DIR "Playerbot/")
+  set (EXCLUDE_DIR "playerbot/")
   foreach (TMP_PATH ${LIBRARY_SRCS})
       string (FIND ${TMP_PATH} ${EXCLUDE_DIR} EXCLUDE_DIR_FOUND)
       if (NOT ${EXCLUDE_DIR_FOUND} EQUAL -1)
