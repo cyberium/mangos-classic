@@ -3590,16 +3590,9 @@ void Unit::_UpdateAutoRepeatSpell()
         // some check about new target are necessary
         if (!currTarget || !currTarget->isTargetableForAttack() || !currTarget->IsHostileTo(this))
         {
-            // we have not a valid target we can stop auto-shot only if current spell target is not valid too
-            if (!currSpellTarget || currSpellTarget == currTarget || !currSpellTarget->isTargetableForAttack() || !currSpellTarget->IsHostileTo(this))
-            {
-                // no valid target
-                InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
-                return;
-            }
-
-            // current spell target is still valid
-            currTarget = currSpellTarget;
+            // no valid target
+            InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
+            return;
         }
 
         SpellCastTargets targets;
