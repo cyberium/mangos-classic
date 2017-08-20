@@ -77,10 +77,23 @@ void WorldSocket::SendPacket(const WorldPacket& pct, bool immediate)
 
     m_crypt.EncryptSend(reinterpret_cast<uint8 *>(&header), sizeof(header));
 
-    Write(reinterpret_cast<const char *>(&header), sizeof(header));
+    // get correct size of the header and content
+    int headerSize = int(sizeof(header));
+    int contentSize = int(pct.size());
+    int totalSize = int(headerSize + contentSize);
 
-    if (!!pct.size())
-        Write(reinterpret_cast<const char *>(pct.contents()), pct.size());
+    // create temporary variable to contain the whole message
+    std::unique_ptr<char[]> data = std::unique_ptr<char[]>(new char[totalSize]);
+
+    // fill temp variable with header 
+    memcpy(&data[0], reinterpret_cast<const char *>(&header), headerSize);
+
+    // fill temp variable with message content if need
+    if (contentSize)
+        memcpy(&data[headerSize], reinterpret_cast<const char *>(pct.contents()), contentSize);
+
+    // write temp variable to the socket.
+    Write(&data[0], totalSize);
 
     if (immediate)
         ForceFlushOut();
