@@ -2371,7 +2371,7 @@ SpellMissInfo Unit::MagicSpellHitResult(Unit* pVictim, SpellEntry const* spell, 
     return SPELL_MISS_NONE;
 }
 
-SpellMissInfo Unit::SpellHitResult(Unit* pVictim, SpellEntry const* spell, bool reflectable)
+SpellMissInfo Unit::SpellHitResult(Unit* pVictim, SpellEntry const* spell, bool reflectable /*= false*/, SpellEntry const* triggeredBy /*= nullptr*/)
 {
     // Dead units can't be missed, can't resist, reflect, etc
     if (!pVictim->isAlive())
@@ -2381,7 +2381,7 @@ SpellMissInfo Unit::SpellHitResult(Unit* pVictim, SpellEntry const* spell, bool 
         return SPELL_MISS_EVADE;
     // All positive spells can`t miss
     // TODO: client not show miss log for this spells - so need find info for this in dbc and use it!
-    if (IsPositiveSpell(spell, this, pVictim))
+    if ((!triggeredBy && IsPositiveSpell(spell, this, pVictim)) || (triggeredBy && IsPositiveSpell(triggeredBy, this, pVictim)))
         return SPELL_MISS_NONE;
     SpellSchoolMask schoolMask = GetSpellSchoolMask(spell);
     // wand case
