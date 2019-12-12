@@ -25,7 +25,25 @@ if(CCACHE_PROGRAM)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CCACHE_PROGRAM}")
 endif()
 
+set(CMANGOS_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake" CACHE PATH "Custom cmake directory")
+set(HUNTER_CMAKE_DIR "${CMANGOS_CMAKE_DIR}/Hunter" CACHE PATH "Hunter cmake directory")
+list(APPEND CMAKE_MODULE_PATH ${CMANGOS_CMAKE_DIR} ${HUNTER_CMAKE_DIR})
+
+set(HUNTER_CONFIGURATION_TYPES Release)
+set(HUNTER_JOBS_NUMBER 4)
+set(HUNTER_ROOT "c:/hunter")
+set(HUNTER_DEBUG "ON")
+#set(HUNTER_CACHE_SERVERS "https://github.com/cmangos/hunter-cache")
+include(HunterGate)
+HunterGate(
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.236.tar.gz"
+    SHA1 "e998928e97e1a13cb35eebba2c62159eefc55d0d"
+    LOCAL
+)
+
 project(CMaNGOS_Classic)
+
+
 
 # Define here name of the binaries
 set(CMANGOS_BINARY_SERVER_NAME "mangosd")
@@ -194,7 +212,7 @@ if(MSVC)
   # Use at least verion 3.8.1 of FindBoost to fix some issues. Especialy in MSVC with fixed Toolset issues.
   # This is a workaround while VisualStudio does not embed higher cmake version than 3.7.2
   if(${CMAKE_VERSION} VERSION_LESS "3.11.3")
-    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/macros/FindBoost)
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/macros/FindBoost")
     message(STATUS "FindBoost: included version 3.11.3 of FindBoost is used.")
   endif()
 endif()
@@ -205,6 +223,7 @@ if (POLICY CMP0074)
 endif()
 
 # Find needed packages and if necessery abort if something important is missing
+hunter_add_package(Boost COMPONENTS system program_options thread regex)
 find_package(Boost REQUIRED COMPONENTS system program_options thread regex)
 
 if(NOT Boost_FOUND)
@@ -222,6 +241,11 @@ if(NOT Boost_FOUND)
   endif()
   message(FATAL_ERROR "This project requires boost.  Please install from http://www.boost.org")
 endif()
+
+hunter_add_package(ZLIB)
+hunter_add_package(BZip2)
+hunter_add_package(MySQL-client)
+hunter_add_package(OpenSSL)
 
 # Win32 delivered packages
 if(WIN32)
