@@ -43,8 +43,6 @@ HunterGate(
 
 project(CMaNGOS_Classic)
 
-
-
 # Define here name of the binaries
 set(CMANGOS_BINARY_SERVER_NAME "mangosd")
 set(CMANGOS_BINARY_REALMD_NAME "realmd")
@@ -222,87 +220,19 @@ if (POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
-# Find needed packages and if necessery abort if something important is missing
+# Get dependencies lib from hunter's server and build them if need
 hunter_add_package(Boost COMPONENTS system program_options thread regex)
-find_package(Boost REQUIRED COMPONENTS system program_options thread regex)
-
-if(NOT Boost_FOUND)
-  message(STATUS "BOOST_ROOT = $ENV{BOOST_ROOT}")
-  message(STATUS "BOOST_LIBRARYDIR = $ENV{BOOST_LIBRARYDIR}")
-  if ("$ENV{BOOST_ROOT}" STREQUAL "")
-    message(WARNING "BOOST_ROOT is not set, please set it correctly to your boost folder.")
-  else()
-    if ("$ENV{BOOST_LIBRARYDIR}" STREQUAL "")
-        message(STATUS "Please put all ${DEP_ARCH} boost lib files in $ENV{BOOST_ROOT}\\lib\\${DEP_ARCH} folder")
-        message(STATUS "Or set BOOST_LIBRARYDIR to your boost lib folder.")
-    else()
-        message(STATUS "BOOST_LIBRARYDIR is set, please verify if correct libs files are in that folder.")
-    endif()
-  endif()
-  message(FATAL_ERROR "This project requires boost.  Please install from http://www.boost.org")
-endif()
-
 hunter_add_package(ZLIB)
 hunter_add_package(BZip2)
 hunter_add_package(MySQL-client)
 hunter_add_package(OpenSSL)
 
-# Win32 delivered packages
-if(WIN32)
-  set(MYSQL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/dep/lib/include")
-  set(MYSQL_LIBRARY "${CMAKE_SOURCE_DIR}/dep/lib/${DEP_ARCH}_release/libmySQL.lib")
-  set(MYSQL_DEBUG_LIBRARY "${CMAKE_SOURCE_DIR}/dep/lib/${DEP_ARCH}_debug/libmySQL.lib")
-  set(OPENSSL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/dep/lib/include")
-  set(OPENSSL_LIBRARIES "${CMAKE_SOURCE_DIR}/dep/lib/${DEP_ARCH}_release/libcrypto.dll.lib")
-  set(OPENSSL_DEBUG_LIBRARIES "${CMAKE_SOURCE_DIR}/dep/lib/${DEP_ARCH}_debug/libcrypto.dll.lib")
-endif()
-
-# *nix-specific packages
-if(UNIX)
-  if(POSTGRESQL)
-    find_package(PostgreSQL REQUIRED)
-  else()
-    find_package(MySQL REQUIRED)
-  endif()
-
-  if(APPLE)
-    find_package(OpenSSL QUIET)
-    if(NOT OpenSSL_FOUND AND NOT OPENSSL_FOUND)
-      # If OpenSSL path isn't specified on mac we set the one that homebrew uses and try again
-      set(OPENSSL_ROOT_DIR /usr/local/opt/openssl/)
-      set(OPENSSL_INCLUDE_DIR /usr/local/opt/openssl/include)
-      find_package(OpenSSL)
-    endif()
-  else()
-    find_package(OpenSSL)
-  endif()
-
-  if(NOT OpenSSL_FOUND AND NOT OPENSSL_FOUND)
-    message(FATAL_ERROR "OpenSSL not found!")
-  else()
-    if(OpenSSL_VERSION AND NOT OPENSSL_VERSION)
-      set(OPENSSL_VERSION ${OpenSSL_VERSION})
-    endif()
-    if(OPENSSL_VERSION VERSION_LESS 1.0.1)
-      message(WARNING "You are using an outdated version of OpenSSL library. It may be incompatible or vulnerable.")
-    endif()
-  endif()
-endif()
-
-find_package(ZLIB QUIET)
-if(NOT ZLIB_FOUND)
-  # use internal source code
-  set(ZLIB_LIBRARIES "zlib")
-  message(STATUS "Could not find ZLIB on your system. The provided sources will be used.")
-endif()
-if(BUILD_EXTRACTORS)
-  find_package(BZip2 QUIET)
-  if(NOT (BZip2_FOUND OR BZIP2_FOUND))
-    # use provided source code
-    set(BZIP2_LIBRARIES "bzip2")
-    message(STATUS "Could not find BZIP2 on your system. The provided sources will be used.")
-  endif()
-endif()
+# Find hunter packages
+find_package(Boost CONFIG REQUIRED COMPONENTS system program_options thread regex)
+find_package(MySQL-client CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(BZip2 REQUIRED)
 
 # Find core revision
 if(GIT_EXECUTABLE)

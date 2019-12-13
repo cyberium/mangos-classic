@@ -176,42 +176,26 @@ else()
      )
 endif()
 
-# include external dependencies without warnings
-include_directories(SYSTEM
-  ${OPENSSL_INCLUDE_DIR}
-)
-
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_BINARY_DIR}
-)
-
-if(POSTGRESQL AND POSTGRESQL_FOUND AND NOT WIN32)
-  include_directories(SYSTEM ${PostgreSQL_INCLUDE_DIRS})
-else()
-  include_directories(SYSTEM ${MYSQL_INCLUDE_DIR})
-endif()
-
 add_library(${LIBRARY_NAME} STATIC
   ${LIBRARY_SRCS}
+)
+
+target_include_directories(${LIBRARY_NAME}
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC framework
   PUBLIC utf8cpp
-  PUBLIC ${OPENSSL_LIBRARIES}
+  PUBLIC OpenSSL::Crypto
+  PUBLIC Boost::thread
+  PUBLIC Boost::program_options
 )
 
-target_include_directories(${LIBRARY_NAME}
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-  PUBLIC ${OPENSSL_INCLUDE_DIR}
-  PRIVATE ${Boost_INCLUDE_DIRS}
-)
-
-if(POSTGRESQL AND POSTGRESQL_FOUND AND NOT WIN32)
-  target_include_directories(${LIBRARY_NAME} PUBLIC ${PostgreSQL_INCLUDE_DIRS})
-else()
-  target_include_directories(${LIBRARY_NAME} PUBLIC ${MYSQL_INCLUDE_DIR})
+if(POSTGRESQL AND POSTGRESQL_FOUND)
+    target_link_libraries(${LIBRARY_NAME} ${PostgreSQL_LIBRARIES})
+  else()
+    target_link_libraries(${LIBRARY_NAME} PUBLIC MySQL::libmysql)
 endif()
 
 # Mark the revision header as being generated.
@@ -220,4 +204,16 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/src/shared/revision.h
              HEADER_FILE_ONLY TRUE)
 if(MSVC)
   set_target_properties(${LIBRARY_NAME} PROPERTIES PROJECT_LABEL "Shared")
+endif()
+
+if(WIN32)
+  set(DLL_LOCATION "")
+  get_property(DLL_LOCATION TARGET MySQL::libmysql PROPERTY LOCATION)
+
+  get_property(DLL_LOCATION TARGET OpenSSL::Crypto PROPERTY LOCATION)
+  add_custom_command(TARGET ${LIBRARY_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different \"${DLL_LOCATION}\" \"${DEV_BIN_DIR}\")
+
+  add_custom_command(TARGET ${LIBRARY_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different \"${DLL_LOCATION}\" \"${DEV_BIN_DIR}\")
 endif()
