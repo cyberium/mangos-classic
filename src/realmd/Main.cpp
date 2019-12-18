@@ -33,8 +33,7 @@
 #include "Util.h"
 #include "Network/Listener.hpp"
 
-#include <openssl/opensslv.h>
-#include <openssl/crypto.h>
+#include <cryptopp/config.h>
 
 #include <boost/program_options.hpp>
 #include <boost/version.hpp>
@@ -177,12 +176,8 @@ int main(int argc, char* argv[])
         Log::WaitBeforeContinueIfNeed();
     }
 
-    DETAIL_LOG("%s (Library: %s)", OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
-    if (SSLeay() < 0x009080bfL)
-    {
-        DETAIL_LOG("WARNING: Outdated version of OpenSSL lib. Logins to server may not work!");
-        DETAIL_LOG("WARNING: Minimal required version [OpenSSL 0.9.8k]");
-    }
+    DEBUG_LOG("Using CryptoPP (Library version: %u)", uint32(CRYPTOPP_VERSION));
+    DEBUG_LOG("Using Boost: %s", BOOST_LIB_VERSION);
 
     /// realmd PID file creation
     std::string pidfile = sConfig.GetStringDefault("PidFile");
