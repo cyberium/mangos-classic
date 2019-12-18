@@ -39,6 +39,7 @@ class Sha1Hash
         void UpdateData(const std::string& str);
 
         uint8 const* GetDigest(void) const;
+        std::string AsHexStr() const;
         static int GetLength(void) { return CryptoPP::SHA1::DIGESTSIZE; };
 
     private:

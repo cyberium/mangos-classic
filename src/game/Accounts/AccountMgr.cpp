@@ -281,8 +281,5 @@ std::string AccountMgr::CalculateShaPassHash(std::string& name, std::string& pas
     sha.UpdateData(password);
     sha.Finalize();
 
-    std::string encoded;
-    hexEncodeByteArray(sha.GetDigest(), Sha1Hash::GetLength(), encoded);
-
-    return encoded;
+    return sha.AsHexStr();
 }

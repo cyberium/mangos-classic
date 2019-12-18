@@ -20,6 +20,7 @@
 #include "Auth/BigNumber.h"
 
 #include <cstdarg>
+#include "cryptopp/hex.h"
 
 using namespace CryptoPP;
 
@@ -60,4 +61,21 @@ void Sha1Hash::UpdateData(const std::string& str)
 uint8 const* Sha1Hash::GetDigest(void) const
 {
     return m_digest;
+}
+
+std::string Sha1Hash::AsHexStr() const
+{
+    std::string hexResult;
+    HexEncoder encoder;
+    encoder.Put(m_digest, SHA1::DIGESTSIZE);
+    encoder.MessageEnd();
+
+    uint64 size = encoder.MaxRetrievable();
+    if (size)
+    {
+        hexResult.resize(size);
+        encoder.Get((byte*)&hexResult[0], hexResult.size());
+    }
+
+    return hexResult;
 }
