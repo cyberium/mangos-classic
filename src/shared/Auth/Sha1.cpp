@@ -21,24 +21,16 @@
 
 #include <cstdarg>
 
-Sha1Hash::Sha1Hash()
+using namespace CryptoPP;
+
+void Sha1Hash::Initialize()
 {
-    SHA1_Init(&mC);
+    m_sha1.Restart();
 }
 
-Sha1Hash::~Sha1Hash()
+void Sha1Hash::Finalize()
 {
-    SHA1_Init(&mC);
-}
-
-void Sha1Hash::UpdateData(const uint8* dta, int len)
-{
-    SHA1_Update(&mC, dta, len);
-}
-
-void Sha1Hash::UpdateData(const std::string& str)
-{
-    UpdateData((uint8 const*)str.c_str(), str.length());
+    m_sha1.Final(m_digest);
 }
 
 void Sha1Hash::UpdateBigNumbers(BigNumber* bn0, ...)
@@ -55,12 +47,17 @@ void Sha1Hash::UpdateBigNumbers(BigNumber* bn0, ...)
     va_end(v);
 }
 
-void Sha1Hash::Initialize()
+void Sha1Hash::UpdateData(const uint8* dta, int len)
 {
-    SHA1_Init(&mC);
+    m_sha1.Update(dta, len);
 }
 
-void Sha1Hash::Finalize(void)
+void Sha1Hash::UpdateData(const std::string& str)
 {
-    SHA1_Final(mDigest, &mC);
+    UpdateData((uint8 const*)str.c_str(), str.length());
+}
+
+uint8 const* Sha1Hash::GetDigest(void) const
+{
+    return m_digest;
 }

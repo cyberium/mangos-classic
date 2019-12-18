@@ -251,7 +251,7 @@ bool AuthSocket::ProcessIncomingData()
     return true;
 }
 
-void AuthSocket::SendProof(Sha1Hash sha)
+void AuthSocket::SendProof(Sha1Hash& sha)
 {
     switch (_build)
     {

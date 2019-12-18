@@ -44,7 +44,7 @@ class AuthSocket : public MaNGOS::Socket
 
         AuthSocket(boost::asio::io_service& service, std::function<void (Socket*)> closeHandler);
 
-        void SendProof(Sha1Hash sha);
+        void SendProof(Sha1Hash& sha);
         void LoadRealmlist(ByteBuffer& pkt, uint32 acctid);
         int32 generateToken(char const* b32key);
 

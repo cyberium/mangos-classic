@@ -20,30 +20,27 @@
 #define _AUTH_SHA1_H
 
 #include "Common.h"
-#include <openssl/sha.h>
-#include <openssl/crypto.h>
+#include "cryptopp/sha.h"
 
 class BigNumber;
 
+typedef std::unique_ptr<uint8[]> SHA1DigestUPtr;
 class Sha1Hash
 {
     public:
-        Sha1Hash();
-        ~Sha1Hash();
+        void Initialize();
+        void Finalize();
 
         void UpdateBigNumbers(BigNumber* bn0, ...);
 
         void UpdateData(const uint8* dta, int len);
         void UpdateData(const std::string& str);
 
-        void Initialize();
-        void Finalize();
-
-        uint8* GetDigest(void) { return mDigest; };
-        static int GetLength(void) { return SHA_DIGEST_LENGTH; };
+        uint8 const* GetDigest(void) const;
+        static int GetLength(void) { return CryptoPP::SHA1::DIGESTSIZE; };
 
     private:
-        SHA_CTX mC;
-        uint8 mDigest[SHA_DIGEST_LENGTH];
+        CryptoPP::SHA1 m_sha1;
+        uint8 m_digest[CryptoPP::SHA1::DIGESTSIZE];
 };
 #endif
