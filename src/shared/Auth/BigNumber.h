@@ -21,73 +21,70 @@
 
 #include "Common.h"
 
-struct bignum_st;
+#include <cryptopp/integer.h>
 
 class BigNumber
 {
-    public:
-        BigNumber();
-        BigNumber(const BigNumber& bn);
-        BigNumber(uint32);
-        ~BigNumber();
+public:
+    BigNumber() : m_array(nullptr) {}
+    BigNumber(uint32 intVal) : m_integer(intVal), m_array(nullptr) {}
+    BigNumber(CryptoPP::Integer intVal) : m_integer(intVal), m_array(nullptr) {}
 
-        void SetDword(uint32);
-        void SetQword(uint64);
-        void SetBinary(const uint8* bytes, int len);
-        int SetHexStr(const char* str);
+    // modifiers
 
-        void SetRand(int numbits);
+    void SetBinary(const uint8* bytes, int len);
+    int SetHexStr(const char* str);
+    void SetRand(int numbits);
 
-        BigNumber operator=(const BigNumber& bn);
+    // operators
 
-        BigNumber operator+=(const BigNumber& bn);
-        BigNumber operator+(const BigNumber& bn)
-        {
-            BigNumber t(*this);
-            return t += bn;
-        }
-        BigNumber operator-=(const BigNumber& bn);
-        BigNumber operator-(const BigNumber& bn)
-        {
-            BigNumber t(*this);
-            return t -= bn;
-        }
-        BigNumber operator*=(const BigNumber& bn);
-        BigNumber operator*(const BigNumber& bn)
-        {
-            BigNumber t(*this);
-            return t *= bn;
-        }
-        BigNumber operator/=(const BigNumber& bn);
-        BigNumber operator/(const BigNumber& bn)
-        {
-            BigNumber t(*this);
-            return t /= bn;
-        }
-        BigNumber operator%=(const BigNumber& bn);
-        BigNumber operator%(const BigNumber& bn)
-        {
-            BigNumber t(*this);
-            return t %= bn;
-        }
+    BigNumber operator=(const BigNumber& bn);
 
-        bool isZero() const;
+    BigNumber operator+=(const BigNumber& bn);
+    BigNumber operator+(const BigNumber& bn)
+    {
+        BigNumber t(*this);
+        return t += bn;
+    }
+    BigNumber operator-=(const BigNumber& bn);
+    BigNumber operator-(const BigNumber& bn)
+    {
+        BigNumber t(*this);
+        return t -= bn;
+    }
+    BigNumber operator*=(const BigNumber& bn);
+    BigNumber operator*(const BigNumber& bn)
+    {
+        BigNumber t(*this);
+        return t *= bn;
+    }
+    BigNumber operator/=(const BigNumber& bn);
+    BigNumber operator/(const BigNumber& bn)
+    {
+        BigNumber t(*this);
+        return t /= bn;
+    }
+    BigNumber operator%=(const BigNumber& bn);
+    BigNumber operator%(const BigNumber& bn)
+    {
+        BigNumber t(*this);
+        return t %= bn;
+    }
 
-        BigNumber ModExp(const BigNumber& bn1, const BigNumber& bn2);
-        BigNumber Exp(const BigNumber&);
+    BigNumber ModExp(const BigNumber& bn1, const BigNumber& bn2);
+    BigNumber Exp(const BigNumber&);
 
-        int GetNumBytes(void) const;
+    // getters
+    bool isZero() const;
+    int GetNumBytes(void) const;
+    uint32 AsDword() const;
+    uint8* AsByteArray(int minSize = 0);
+    std::string AsHexStr() const;
 
-        struct bignum_st* BN() { return _bn; }
-
-        uint32 AsDword() const;
-        uint8* AsByteArray(int minSize = 0);
-
-        const char* AsHexStr() const;
-        const char* AsDecStr() const;
-
-    private:
-        struct bignum_st* _bn;
-        uint8* _array;
+private:
+    uint8* m_array;
+    CryptoPP::Integer m_integer;
 };
+
 #endif
+

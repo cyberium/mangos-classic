@@ -188,6 +188,7 @@ target_link_libraries(${LIBRARY_NAME}
   PUBLIC framework
   PUBLIC utf8cpp
   PUBLIC OpenSSL::Crypto
+  PUBLIC cryptopp-static
   PUBLIC Boost::thread
   PUBLIC Boost::program_options
 )

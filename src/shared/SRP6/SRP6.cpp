@@ -24,7 +24,7 @@
 SRP6::SRP6()
 {
     N.SetHexStr("894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7");
-    g.SetDword(7);
+    g = 7;
 }
 
 void SRP6::CalculateHostPublicEphemeral(void)
@@ -93,9 +93,8 @@ bool SRP6::CalculateVerifier(const std::string& rI)
 {
     BigNumber salt;
     salt.SetRand(s_BYTE_SIZE * 8);
-    const char* _salt = salt.AsHexStr();
-    bool ret = CalculateVerifier(rI, _salt);
-    OPENSSL_free((void*)_salt);
+    std::string _salt = salt.AsHexStr();
+    bool ret = CalculateVerifier(rI, _salt.c_str());
     return ret;
 }
 
@@ -168,16 +167,15 @@ bool SRP6::Proof(uint8* lp_M, int l)
 
 bool SRP6::ProofVerifier(std::string vC)
 {
+    //TODO::simplify this!
     const char* vC_hex = vC.c_str();
-    const char* v_hex = v.AsHexStr();
+    std::string v_hex = v.AsHexStr();
 
-    if (memcmp(vC_hex, v_hex, strlen(vC_hex)) == 0)
+    if (memcmp(vC_hex, v_hex.c_str(), strlen(vC_hex)) == 0)
     {
-        OPENSSL_free((void*)v_hex);
         return true;
     }
 
-    OPENSSL_free((void*)v_hex);
     return false;
 }
 

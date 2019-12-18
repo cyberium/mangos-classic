@@ -568,9 +568,8 @@ bool AuthSocket::_HandleLogonProof()
 
         ///- Update the sessionkey, last_ip, last login time and reset number of failed logins in the account table for this account
         // No SQL injection (escaped user name) and IP address as received by socket
-        const char* K_hex = srp.GetStrongSessionKey().AsHexStr();
-        LoginDatabase.PExecute("UPDATE account SET sessionkey = '%s', last_ip = '%s', last_login = NOW(), locale = '%u', failed_logins = 0 WHERE username = '%s'", K_hex, m_address.c_str(), GetLocaleByName(_localizationName), _safelogin.c_str());
-        OPENSSL_free((void*)K_hex);
+        std::string K_hex = srp.GetStrongSessionKey().AsHexStr();
+        LoginDatabase.PExecute("UPDATE account SET sessionkey = '%s', last_ip = '%s', last_login = NOW(), locale = '%u', failed_logins = 0 WHERE username = '%s'", K_hex.c_str(), m_address.c_str(), GetLocaleByName(_localizationName), _safelogin.c_str());
 
         ///- Finish SRP6 and send the final result to the client
         Sha1Hash sha;

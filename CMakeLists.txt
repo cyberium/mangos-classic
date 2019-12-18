@@ -29,7 +29,7 @@ set(CMANGOS_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake" CACHE PATH "Custom cmake
 set(HUNTER_CMAKE_DIR "${CMANGOS_CMAKE_DIR}/Hunter" CACHE PATH "Hunter cmake directory")
 list(APPEND CMAKE_MODULE_PATH ${CMANGOS_CMAKE_DIR} ${HUNTER_CMAKE_DIR})
 
-set(HUNTER_CONFIGURATION_TYPES Release)
+#set(HUNTER_CONFIGURATION_TYPES Release)
 set(HUNTER_JOBS_NUMBER 4)
 set(HUNTER_ROOT "c:/hunter")
 set(HUNTER_DEBUG "ON")
@@ -226,11 +226,13 @@ hunter_add_package(ZLIB)
 hunter_add_package(BZip2)
 hunter_add_package(MySQL-client)
 hunter_add_package(OpenSSL)
+hunter_add_package(cryptopp)
 
 # Find hunter packages
 find_package(Boost CONFIG REQUIRED COMPONENTS system program_options thread regex)
 find_package(MySQL-client CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(cryptopp CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
 

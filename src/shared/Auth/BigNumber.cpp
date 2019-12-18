@@ -17,170 +17,115 @@
  */
 
 #include "Auth/BigNumber.h"
-#include <openssl/bn.h>
-#include <algorithm>
+#include <cryptopp/osrng.h>
+#include <cryptopp/algebra.h>
+#include <cryptopp/hex.h>
+#include "Log.h"
 
-BigNumber::BigNumber()
-{
-    _bn = BN_new();
-    _array = nullptr;
-}
-
-BigNumber::BigNumber(const BigNumber& bn)
-{
-    _bn = BN_dup(bn._bn);
-    _array = nullptr;
-}
-
-BigNumber::BigNumber(uint32 val)
-{
-    _bn = BN_new();
-    BN_set_word(_bn, val);
-    _array = nullptr;
-}
-
-BigNumber::~BigNumber()
-{
-    BN_free(_bn);
-    if (_array) delete[] _array;
-}
-
-void BigNumber::SetDword(uint32 val)
-{
-    BN_set_word(_bn, val);
-}
-
-void BigNumber::SetQword(uint64 val)
-{
-    BN_add_word(_bn, (uint32)(val >> 32));
-    BN_lshift(_bn, _bn, 32);
-    BN_add_word(_bn, (uint32)(val & 0xFFFFFFFF));
-}
+using namespace CryptoPP;
 
 void BigNumber::SetBinary(const uint8* bytes, int len)
 {
-    uint8 t[1000];
     for (int i = 0; i < len; ++i)
-        t[i] = bytes[len - 1 - i];
-    BN_bin2bn(t, len, _bn);
+        m_integer.SetByte(i, bytes[i]);
 }
 
 int BigNumber::SetHexStr(const char* str)
 {
-    return BN_hex2bn(&_bn, str);
+    //TODO:: Do we have to take care about endianness here?
+    std::string hexStr(str);
+    hexStr += "h";
+    m_integer = Integer(hexStr.c_str());
+
+    return 1;
 }
 
 void BigNumber::SetRand(int numbits)
 {
-    BN_rand(_bn, numbits, 0, 1);
-}
-
-BigNumber BigNumber::operator=(const BigNumber& bn)
-{
-    BN_copy(_bn, bn._bn);
-    return *this;
+    AutoSeededRandomPool rGen;
+    m_integer = Integer(rGen, numbits);
 }
 
 BigNumber BigNumber::operator+=(const BigNumber& bn)
 {
-    BN_add(_bn, _bn, bn._bn);
+    m_integer += bn.m_integer;
     return *this;
 }
 
 BigNumber BigNumber::operator-=(const BigNumber& bn)
 {
-    BN_sub(_bn, _bn, bn._bn);
+    m_integer -= bn.m_integer;
     return *this;
 }
 
 BigNumber BigNumber::operator*=(const BigNumber& bn)
 {
-    BN_CTX* bnctx = BN_CTX_new();
-    BN_mul(_bn, _bn, bn._bn, bnctx);
-    BN_CTX_free(bnctx);
-
+    m_integer *= bn.m_integer;
     return *this;
 }
 
 BigNumber BigNumber::operator/=(const BigNumber& bn)
 {
-    BN_CTX* bnctx = BN_CTX_new();
-    BN_div(_bn, nullptr, _bn, bn._bn, bnctx);
-    BN_CTX_free(bnctx);
-
+    m_integer /= bn.m_integer;
     return *this;
 }
 
 BigNumber BigNumber::operator%=(const BigNumber& bn)
 {
-    BN_CTX* bnctx = BN_CTX_new();
-    BN_mod(_bn, _bn, bn._bn, bnctx);
-    BN_CTX_free(bnctx);
-
+    m_integer %= bn.m_integer;
     return *this;
 }
 
-BigNumber BigNumber::Exp(const BigNumber& bn)
+BigNumber BigNumber::operator=(const BigNumber& bn)
 {
-    BigNumber ret;
-
-    BN_CTX* bnctx = BN_CTX_new();
-    BN_exp(ret._bn, _bn, bn._bn, bnctx);
-    BN_CTX_free(bnctx);
-
-    return ret;
+    m_integer = bn.m_integer;
+    return *this;
 }
 
 BigNumber BigNumber::ModExp(const BigNumber& bn1, const BigNumber& bn2)
 {
-    BigNumber ret;
-
-    BN_CTX* bnctx = BN_CTX_new();
-    BN_mod_exp(ret._bn, _bn, bn1._bn, bn2._bn, bnctx);
-    BN_CTX_free(bnctx);
-
-    return ret;
+    //r = a ^ p % m
+    return BigNumber(a_exp_b_mod_c(m_integer, bn1.m_integer, bn2.m_integer));
 }
 
-int BigNumber::GetNumBytes(void) const
+BigNumber BigNumber::Exp(const BigNumber& bn)
 {
-    return BN_num_bytes(_bn);
-}
-
-uint32 BigNumber::AsDword() const
-{
-    return (uint32)BN_get_word(_bn);
+    return BigNumber((EuclideanDomainOf<Integer>().Exponentiate(m_integer, bn.m_integer)));
 }
 
 bool BigNumber::isZero() const
 {
-    return BN_is_zero(_bn) != 0;
+    return m_integer.IsZero();
 }
 
-uint8* BigNumber::AsByteArray(int minSize)
+int BigNumber::GetNumBytes(void) const
+{
+    return static_cast<int>(m_integer.ByteCount());
+}
+
+uint32 BigNumber::AsDword() const
+{
+    return static_cast<int>(m_integer.ConvertToLong());
+}
+
+uint8* BigNumber::AsByteArray(int minSize /*= 0*/)
 {
     int length = (minSize >= GetNumBytes()) ? minSize : GetNumBytes();
-
-    delete[] _array;
-    _array = new uint8[length];
+    delete[] m_array;
+    m_array = new uint8[length];
 
     // If we need more bytes than length of BigNumber set the rest to 0
     if (length > GetNumBytes())
-        memset((void*)_array, 0, length);
+        memset((void*)m_array, 0, length);
 
-    BN_bn2bin(_bn, (unsigned char*)_array);
+    m_integer.Encode(m_array, length);
 
-    std::reverse(_array, _array + length);
-
-    return _array;
+    std::reverse(m_array, m_array + length);
+    return m_array;
 }
 
-const char* BigNumber::AsHexStr() const
+std::string BigNumber::AsHexStr() const
 {
-    return BN_bn2hex(_bn);
-}
-
-const char* BigNumber::AsDecStr() const
-{
-    return BN_bn2dec(_bn);
+    const unsigned int UPPER = (1 << 31);
+    return IntToString(m_integer, (UPPER | 16));
 }
