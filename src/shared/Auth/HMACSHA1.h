@@ -19,7 +19,7 @@
 #ifndef _AUTH_HMACSHA1_H
 #define _AUTH_HMACSHA1_H
 
-#include "Common.h"3
+#include "Common.h"
 #include <Auth/Sha1.h>
 #include <cryptopp/hmac.h>
 

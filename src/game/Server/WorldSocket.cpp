@@ -312,8 +312,8 @@ bool WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
     s.SetHexStr(fields[6].GetString());
     m_s = s;
 
-    std::string sStr = s.AsHexStr();                        // Must be freed by OPENSSL_free()
-    std::string vStr = v.AsHexStr();                        // Must be freed by OPENSSL_free()
+    std::string sStr = s.AsHexStr();
+    std::string vStr = v.AsHexStr();
 
     DEBUG_LOG("WorldSocket::HandleAuthSession: (s,v) check s: %s v: %s",
               sStr.c_str(),
