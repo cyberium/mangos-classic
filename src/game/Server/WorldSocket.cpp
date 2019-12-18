@@ -306,21 +306,18 @@ bool WorldSocket::HandleAuthSession(WorldPacket& recvPacket)
     Field* fields = result->Fetch();
 
     N.SetHexStr("894B645E89E1535BBDAD5B8B290650530801B18EBFBF5E8FAB3C82872A3E9BB7");
-    g.SetDword(7);
+    g = 7;
 
     v.SetHexStr(fields[5].GetString());
     s.SetHexStr(fields[6].GetString());
     m_s = s;
 
-    const char* sStr = s.AsHexStr();                        // Must be freed by OPENSSL_free()
-    const char* vStr = v.AsHexStr();                        // Must be freed by OPENSSL_free()
+    std::string sStr = s.AsHexStr();                        // Must be freed by OPENSSL_free()
+    std::string vStr = v.AsHexStr();                        // Must be freed by OPENSSL_free()
 
     DEBUG_LOG("WorldSocket::HandleAuthSession: (s,v) check s: %s v: %s",
-              sStr,
-              vStr);
-
-    OPENSSL_free((void*) sStr);
-    OPENSSL_free((void*) vStr);
+              sStr.c_str(),
+              vStr.c_str());
 
     ///- Re-check ip locking (same check as in realmd).
     if (fields[4].GetUInt8() == 1)  // if ip is locked
