@@ -22,6 +22,8 @@
 #include "Common.h"
 #include "cryptopp/sha.h"
 
+#define SHA_DIGEST_LENGTH CryptoPP::SHA1::DIGESTSIZE
+
 class BigNumber;
 
 typedef std::unique_ptr<uint8[]> SHA1DigestUPtr;

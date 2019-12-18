@@ -967,8 +967,6 @@ int32 AuthSocket::generateToken(char const* b32key)
     size_t bufSize = (keySize + 7) / 8 * 5;
     char* encoded = new char[bufSize];
     memset(encoded, 0, bufSize);
-    unsigned int hmac_result_size = HMAC_RES_SIZE;
-    unsigned char hmac_result[HMAC_RES_SIZE];
     unsigned long timestamp = time(nullptr) / 30;
     unsigned char challenge[8];
 
@@ -976,7 +974,11 @@ int32 AuthSocket::generateToken(char const* b32key)
         challenge[i] = timestamp;
 
     base32_decode(b32key, encoded, bufSize);
-    HMAC(EVP_sha1(), encoded, bufSize, challenge, 8, hmac_result, &hmac_result_size);
+
+    HMACSHA1 hmac((uint32)bufSize, (uint8*)encoded);
+    hmac.UpdateData(challenge, 8);
+    hmac.Finalize();
+    unsigned char* hmac_result = hmac.GetDigest();
     unsigned int offset = hmac_result[19] & 0xF;
     unsigned int truncHash = (hmac_result[offset] << 24) | (hmac_result[offset + 1] << 16) | (hmac_result[offset + 2] << 8) | (hmac_result[offset + 3]);
     truncHash &= 0x7FFFFFFF;

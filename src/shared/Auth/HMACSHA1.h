@@ -19,9 +19,9 @@
 #ifndef _AUTH_HMACSHA1_H
 #define _AUTH_HMACSHA1_H
 
-#include "Common.h"
-#include <openssl/hmac.h>
-#include <openssl/sha.h>
+#include "Common.h"3
+#include <Auth/Sha1.h>
+#include <cryptopp/hmac.h>
 
 class BigNumber;
 
@@ -38,14 +38,10 @@ class HMACSHA1
         void Initialize();
         void Finalize();
         uint8* GetDigest() { return m_digest; };
-        static int GetLength() { return SHA_DIGEST_LENGTH; };
+        static int GetLength() { return CryptoPP::SHA1::DIGESTSIZE; };
     private:
-#if defined(OPENSSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x10100000L
-        HMAC_CTX* m_ctx;
-#else
-        HMAC_CTX m_ctx;
-#endif
+        std::unique_ptr<CryptoPP::HMAC<CryptoPP::SHA1>> m_hmac;
         uint8 m_key[SEED_KEY_SIZE];
-        uint8 m_digest[SHA_DIGEST_LENGTH];
+        uint8 m_digest[CryptoPP::SHA1::DIGESTSIZE];
 };
 #endif
