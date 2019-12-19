@@ -187,7 +187,6 @@ target_include_directories(${LIBRARY_NAME}
 target_link_libraries(${LIBRARY_NAME}
   PUBLIC framework
   PUBLIC utf8cpp
-  PUBLIC OpenSSL::Crypto
   PUBLIC cryptopp-static
   PUBLIC Boost::thread
   PUBLIC Boost::program_options
@@ -205,15 +204,14 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/src/shared/revision.h
              HEADER_FILE_ONLY TRUE)
 if(MSVC)
   set_target_properties(${LIBRARY_NAME} PROPERTIES PROJECT_LABEL "Shared")
+
+  # ignore pdb missing warning for third party libs in debug mode 
+  target_link_options(${LIBRARY_NAME} PUBLIC "/ignore:4099")
 endif()
 
 if(WIN32)
   set(DLL_LOCATION "")
   get_property(DLL_LOCATION TARGET MySQL::libmysql PROPERTY LOCATION)
-
-  get_property(DLL_LOCATION TARGET OpenSSL::Crypto PROPERTY LOCATION)
-  add_custom_command(TARGET ${LIBRARY_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different \"${DLL_LOCATION}\" \"${DEV_BIN_DIR}\")
 
   add_custom_command(TARGET ${LIBRARY_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different \"${DLL_LOCATION}\" \"${DEV_BIN_DIR}\")

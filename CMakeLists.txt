@@ -29,7 +29,7 @@ set(CMANGOS_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake" CACHE PATH "Custom cmake
 set(HUNTER_CMAKE_DIR "${CMANGOS_CMAKE_DIR}/Hunter" CACHE PATH "Hunter cmake directory")
 list(APPEND CMAKE_MODULE_PATH ${CMANGOS_CMAKE_DIR} ${HUNTER_CMAKE_DIR})
 
-#set(HUNTER_CONFIGURATION_TYPES Release)
+set(HUNTER_CONFIGURATION_TYPES Debug Release RelWithDebInfo MinSizeRel)
 set(HUNTER_JOBS_NUMBER 4)
 set(HUNTER_ROOT "c:/hunter")
 set(HUNTER_DEBUG "ON")
@@ -193,27 +193,10 @@ endif()
 set(CMAKE_INSTALL_RPATH ../${LIBS_FOLDER_NAME})
 set(CMAKE_INSTALL_NAME_DIR ${LIBS_DIR})
 
-# Add alternate lib dir for boost on windows
-if(WIN32 AND NOT "$ENV{BOOST_ROOT}" STREQUAL "")
-  set(BOOST_LIBRARYDIR "$ENV{BOOST_LIBRARYDIR}")
-  set(BOOST_LIBRARYDIR "${BOOST_LIBRARYDIR};$ENV{BOOST_ROOT}\\lib\\${DEP_ARCH}")
-  set(BOOST_LIBRARYDIR "${BOOST_LIBRARYDIR};$ENV{BOOST_ROOT}\\stage\\${DEP_ARCH}")
-  set(BOOST_LIBRARYDIR "${BOOST_LIBRARYDIR};$ENV{BOOST_ROOT}\\stage")
-endif()
-
 # Be sure to search only static lib
 add_definitions(-DBOOST_ALL_NO_LIB)
 set(Boost_USE_STATIC_LIBS ON)
 #set(Boost_DEBUG ON)
-
-if(MSVC)
-  # Use at least verion 3.8.1 of FindBoost to fix some issues. Especialy in MSVC with fixed Toolset issues.
-  # This is a workaround while VisualStudio does not embed higher cmake version than 3.7.2
-  if(${CMAKE_VERSION} VERSION_LESS "3.11.3")
-    list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/macros/FindBoost")
-    message(STATUS "FindBoost: included version 3.11.3 of FindBoost is used.")
-  endif()
-endif()
 
 # In our case use new way to treat BOOST_ROOT environement variable
 if (POLICY CMP0074)
@@ -222,19 +205,17 @@ endif()
 
 # Get dependencies lib from hunter's server and build them if need
 hunter_add_package(Boost COMPONENTS system program_options thread regex)
+hunter_add_package(MySQL-client)
 hunter_add_package(ZLIB)
 hunter_add_package(BZip2)
-hunter_add_package(MySQL-client)
-hunter_add_package(OpenSSL)
 hunter_add_package(cryptopp)
 
 # Find hunter packages
 find_package(Boost CONFIG REQUIRED COMPONENTS system program_options thread regex)
 find_package(MySQL-client CONFIG REQUIRED)
-find_package(OpenSSL REQUIRED)
-find_package(cryptopp CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
+find_package(cryptopp CONFIG REQUIRED)
 
 # Find core revision
 if(GIT_EXECUTABLE)
