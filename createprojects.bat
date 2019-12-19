@@ -1,15 +1,6 @@
 @ECHO off
-mkdir build
-cd build
+ECHO Building project with default setting
+cmake -H. -Bbin/builddir
 
-if %1!==! goto without
-
-cmake .. -G %1
-if errorlevel 1 call cmake --help
-goto end
-
-:without
-cmake ..
-
-:end
-cd ..
+ECHO Building binaries in bin folder
+cmake --build bin/builddir --config Release
