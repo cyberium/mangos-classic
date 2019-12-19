@@ -22,8 +22,11 @@
 #include "PacketBuffer.hpp"
 
 #include "Platform/Define.h"
+#include "Common.h"
 
+DISABLE_WARNING_PUSH
 #include <boost/asio.hpp>
+DISABLE_WARNING_POP
 
 #include <memory>
 #include <string>

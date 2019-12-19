@@ -24,8 +24,9 @@
 #include "Database/SqlDelayThread.h"
 #include "Policies/ThreadingModel.h"
 #include "SqlPreparedStatement.h"
-
+DISABLE_WARNING_PUSH
 #include <boost/thread/tss.hpp>
+DISABLE_WARNING_POP
 #include <atomic>
 
 class SqlTransaction;

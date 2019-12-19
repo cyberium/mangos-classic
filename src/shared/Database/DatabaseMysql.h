@@ -21,11 +21,12 @@
 #ifndef _DATABASEMYSQL_H
 #define _DATABASEMYSQL_H
 
-//#include "Common.h"
 #include "Database.h"
 #include "Policies/Singleton.h"
 
+DISABLE_WARNING_PUSH
 #include <mysql.h>
+DISABLE_WARNING_POP
 
 // MySQL prepared statement class
 class MySqlPreparedStatement : public SqlPreparedStatement

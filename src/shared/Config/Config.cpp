@@ -20,8 +20,9 @@
 #include "Policies/Singleton.h"
 #include <mutex>
 
+DISABLE_WARNING_PUSH
 #include <boost/algorithm/string.hpp>
-
+DISABLE_WARNING_POP
 #include <unordered_map>
 #include <string>
 #include <fstream>

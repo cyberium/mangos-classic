@@ -21,7 +21,9 @@
 #include <utf8.h>
 #include "TSS.h"
 
+DISABLE_WARNING_PUSH
 #include <boost/asio.hpp>
+DISABLE_WARNING_POP
 
 #include <chrono>
 #include <cstdarg>

@@ -21,7 +21,9 @@
 
 #include "NetworkThread.hpp"
 
+DISABLE_WARNING_PUSH
 #include <boost/asio.hpp>
+DISABLE_WARNING_POP
 
 #include <memory>
 #include <thread>

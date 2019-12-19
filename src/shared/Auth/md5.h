@@ -22,7 +22,9 @@
 #include "Common.h"
 
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
+DISABLE_WARNING_PUSH
 #include "cryptopp/md5.h"
+DISABLE_WARNING_POP
 
 #define MD5_DIGEST_LENGTH CryptoPP::Weak::MD5::DIGESTSIZE
 

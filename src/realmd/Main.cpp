@@ -35,8 +35,10 @@
 
 #include <cryptopp/config.h>
 
+DISABLE_WARNING_PUSH
 #include <boost/program_options.hpp>
 #include <boost/version.hpp>
+DISABLE_WARNING_POP
 
 #include <iostream>
 #include <string>

@@ -31,7 +31,9 @@
 
 #include "Network/Socket.hpp"
 
+DISABLE_WARNING_PUSH
 #include <boost/asio.hpp>
+DISABLE_WARNING_POP
 
 #include <functional>
 

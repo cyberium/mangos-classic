@@ -25,7 +25,9 @@
 #include "Errors.h"
 #include "Threading.h"
 #include <thread>
+DISABLE_WARNING_PUSH
 #include <boost/asio.hpp>
+DISABLE_WARNING_POP
 #include "Common.h"
 #include "Log.h"
 #include "Server/SQLStorages.h"

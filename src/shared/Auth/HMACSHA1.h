@@ -21,7 +21,9 @@
 
 #include "Common.h"
 #include <Auth/Sha1.h>
+DISABLE_WARNING_PUSH
 #include <cryptopp/hmac.h>
+DISABLE_WARNING_POP
 
 class BigNumber;
 

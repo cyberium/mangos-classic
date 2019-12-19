@@ -21,7 +21,9 @@
 
 #include "Common.h"
 
+DISABLE_WARNING_PUSH
 #include <cryptopp/integer.h>
+DISABLE_WARNING_POP
 
 class BigNumber
 {

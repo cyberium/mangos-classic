@@ -19,9 +19,11 @@
 #include "Socket.hpp"
 #include "Log.h"
 
+DISABLE_WARNING_PUSH
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/lexical_cast.hpp>
+DISABLE_WARNING_POP
 
 #include <string>
 #include <memory>

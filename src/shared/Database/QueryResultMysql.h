@@ -22,7 +22,9 @@
 #define QUERYRESULTMYSQL_H
 
 #include "Common.h"
+DISABLE_WARNING_PUSH
 #include <mysql.h>
+DISABLE_WARNING_POP
 
 #ifdef _WIN32
 #include <WinSock2.h>

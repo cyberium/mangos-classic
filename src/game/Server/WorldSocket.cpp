@@ -36,7 +36,10 @@
 #include <functional>
 #include <memory>
 
+DISABLE_WARNING_PUSH
 #include <boost/asio.hpp>
+DISABLE_WARNING_POP
+
 #include <utility>
 
 #if defined( __GNUC__ )

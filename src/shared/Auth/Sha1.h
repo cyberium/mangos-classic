@@ -20,7 +20,10 @@
 #define _AUTH_SHA1_H
 
 #include "Common.h"
+
+DISABLE_WARNING_PUSH
 #include "cryptopp/sha.h"
+DISABLE_WARNING_POP
 
 #define SHA_DIGEST_LENGTH CryptoPP::SHA1::DIGESTSIZE
 
