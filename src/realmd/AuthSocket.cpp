@@ -31,7 +31,7 @@
 #include "AuthCodes.h"
 #include "SRP6/SRP6.h"
 
-#include <cryptopp/md5.h>
+#include <Auth/md5.h>
 #include <ctime>
 #include <utility>
 
@@ -162,7 +162,7 @@ typedef struct XFER_INIT
     uint8 fileNameLen;                                      // strlen(fileName);
     uint8 fileName[5];                                      // fileName[fileNameLen]
     uint64 file_size;                                       // file size (bytes)
-    uint8 md5[CryptoPP::MD5::DIGESTSIZE];                   // MD5
+    uint8 md5[MD5_DIGEST_LENGTH];                           // MD5
 } XFER_INIT;
 
 typedef struct AuthHandler
