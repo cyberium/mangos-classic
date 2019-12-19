@@ -31,7 +31,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMANGOS_CMAKE_DIR} ${HUNTER_CMAKE_DIR})
 
 set(HUNTER_CONFIGURATION_TYPES Debug Release RelWithDebInfo MinSizeRel)
 set(HUNTER_JOBS_NUMBER 4)
-set(HUNTER_ROOT "c:/hunter")
+set(HUNTER_ROOT "../hunter")
 set(HUNTER_DEBUG "ON")
 #set(HUNTER_CACHE_SERVERS "https://github.com/cmangos/hunter-cache")
 include(HunterGate)
