@@ -205,17 +205,17 @@ endif()
 
 # Get dependencies lib from hunter's server and build them if need
 hunter_add_package(Boost COMPONENTS system program_options thread regex)
-hunter_add_package(MySQL-client)
 hunter_add_package(ZLIB)
 hunter_add_package(BZip2)
 hunter_add_package(cryptopp)
+hunter_add_package(MySQL-client)
 
 # Find hunter packages
 find_package(Boost CONFIG REQUIRED COMPONENTS system program_options thread regex)
-find_package(MySQL-client CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
+find_package(MySQL-client CONFIG REQUIRED)
 
 # Find core revision
 if(GIT_EXECUTABLE)
