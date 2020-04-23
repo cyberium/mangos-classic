@@ -256,6 +256,7 @@ struct FactionTemplateEntry;
 struct Modifier;
 struct SpellEntry;
 struct SpellEntryExt;
+struct SlotData;
 
 class Aura;
 class SpellAuraHolder;
@@ -268,6 +269,9 @@ class Pet;
 class PetAura;
 class Totem;
 class SpellCastTargets;
+
+//forward declaration (declared in Formation.h)
+typedef std::shared_ptr<SlotData> SlotDataSPtr;
 
 struct SpellImmune
 {
@@ -1921,7 +1925,7 @@ class Unit : public WorldObject
         void UpdateVisibilityAndView() override;            // overwrite WorldObject::UpdateVisibilityAndView()
 
         // common function for visibility checks for player/creatures with detection code
-        bool IsVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, bool detect, bool inVisibleList = false, bool is3dDistance = true, bool spell = false) const;     
+        bool IsVisibleForOrDetect(Unit const* u, WorldObject const* viewPoint, bool detect, bool inVisibleList = false, bool is3dDistance = true, bool spell = false) const;
 
         // virtual functions for all world objects types
         bool isVisibleForInState(Player const* u, WorldObject const* viewPoint, bool inVisibleList) const override;
@@ -2179,6 +2183,7 @@ class Unit : public WorldObject
         virtual bool CanWalk() const = 0;
         virtual bool CanBeDetected() const { return true; }
         virtual bool IsFlying() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_FLYING); }
+        bool IsSwimming() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_SWIMMING); }
 
         void ForceHealthAndPowerUpdate();   // force server to send new value for hp and power (including max)
 
@@ -2239,6 +2244,7 @@ class Unit : public WorldObject
         void RegisterScriptedLocationAura(Aura* aura, AuraScriptLocation location, bool apply); // Spell scripting - requires correctly set spell_affect
         std::vector<Aura*>& GetScriptedLocationAuras(AuraScriptLocation location) { return m_scriptedLocations[location]; }
 
+
         uint8 GetComboPoints() const { return m_comboPoints; }
         ObjectGuid const& GetComboTargetGuid() const { return m_comboTargetGuid; }
 
@@ -2249,6 +2255,12 @@ class Unit : public WorldObject
         uint32 GetModifierXpBasedOnDamageReceived(uint32 xp);
 
         void UpdateSplinePosition();
+
+        // formation methods
+        virtual SlotDataSPtr GetFormationSlot() { return nullptr; }
+        virtual bool IsFormationMaster() const { return false; }
+        virtual void RemoveFromFormation() {}
+
     protected:
 
         struct WeaponDamageInfo

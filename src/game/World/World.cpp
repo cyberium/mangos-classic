@@ -65,6 +65,7 @@
 #include "Weather/Weather.h"
 #include "Cinematics/CinematicMgr.h"
 #include "World/WorldState.h"
+#include "Formation/Formation.h"
 
 #ifdef BUILD_AHBOT
 #include "AuctionHouseBot/AuctionHouseBot.h"
@@ -1124,6 +1125,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString("Loading Npc Text Id...");
     sObjectMgr.LoadNpcGossips();                            // must be after load Creature and LoadGossipText
+
+    // Loading Formation Templates
+    sFormationMgr.Initialize();
 
     sLog.outString("Loading Scripts random templates...");  // must be before String calls
     sScriptMgr.LoadDbScriptRandomTemplates();

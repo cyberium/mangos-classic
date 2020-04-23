@@ -84,15 +84,18 @@ namespace Movement
             UpdateResult _updateState(uint32& ms_time_diff);
             uint32 next_timestamp() const { return spline.length(point_Idx + 1);}
             uint32 segment_time_elapsed() const { return next_timestamp() - time_passed;}
-            uint32 timeElapsed() const { return Duration() - time_passed;}
-            uint32 timePassed() const { return time_passed;}
 
         public:
             const MySpline& _Spline() const { return spline;}
             int32 _currentSplineIdx() const { return point_Idx;}
             void _Finalize();
             void _Interrupt() { splineflags.done = true;}
+
             float GetElapsedValue() const { return float(time_passed) / Duration(); }
+
+            uint32 timeElapsed() const { return Duration() - time_passed;}
+            uint32 timePassed() const { return time_passed;}
+
 
         public:
 
@@ -129,7 +132,11 @@ namespace Movement
             const Vector3 CurrentDestination() const { return Initialized() ? spline.getPoint(point_Idx + 1) : Vector3();}
             int32 currentPathIdx() const;
 
+            Vector3 GetPoint(uint32 idx) const { return spline.getPoint(idx); }
+
             uint32 Duration() const { return spline.length();}
+
+            int32 ComputeTimeToIndex(uint32 idx) const { return spline.length(idx) - time_passed; }
 
             float Speed() const { return speed; }
 

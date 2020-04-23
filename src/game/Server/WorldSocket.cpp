@@ -90,6 +90,13 @@ void WorldSocket::SendPacket(const WorldPacket& pct, bool immediate)
     // encrypt thread unsafe due to being executed from map contexts frequently - TODO: move to post service context in future
     std::lock_guard<std::mutex> guard(m_worldSocketMutex);
 
+    if (m_session && m_session->GetPlayer())
+    {
+        auto pname = m_session->GetPlayer()->GetName();
+
+        sLog.outString("Sending %s to %s", pct.GetOpcodeName(), pname);
+    }
+
     ServerPktHeader header;
 
     header.cmd = pct.GetOpcode();

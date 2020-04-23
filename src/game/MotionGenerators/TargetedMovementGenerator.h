@@ -54,7 +54,7 @@ class TargetedMovementGeneratorMedium
         ~TargetedMovementGeneratorMedium() { delete i_path; }
 
     public:
-        bool Update(T&, const uint32&);
+        virtual bool Update(T&, const uint32&);
 
         virtual bool IsReachable() const override;
 
@@ -220,7 +220,7 @@ class FollowMovementGenerator : public TargetedMovementGeneratorMedium<Unit, Fol
 
         virtual bool Move(Unit& owner, float x, float y, float z);
 
-    private:
+    protected:
         virtual bool _getOrientation(Unit& owner, float& o) const;
         virtual bool _getLocation(Unit& owner, float& x, float& y, float& z, bool movingNow) const;
         virtual void _setOrientation(Unit& owner);
@@ -235,6 +235,38 @@ class FollowMovementGenerator : public TargetedMovementGeneratorMedium<Unit, Fol
         bool m_targetMoving;
         bool m_targetFaced;
         bool m_possess;
+};
+
+#define FORMATION_PATH_TIME_AHEAD 1600
+#define FORMATION_PATH_UPDATE FORMATION_PATH_TIME_AHEAD - 400
+
+class FormationMovementGenerator : public FollowMovementGenerator
+{
+public:
+    FormationMovementGenerator(SlotDataSPtr& sData, bool main) :
+        FollowMovementGenerator(*sData->GetFormationData()->GetMaster(), sData->GetDistance(), float(sData->GetAngle()), main),
+        m_slot(sData), m_formationId(m_slot->GetFormationId())
+    {
+    }
+    ~FormationMovementGenerator() {}
+
+    MovementGeneratorType GetMovementGeneratorType() const override { return FORMATION_MOTION_TYPE; }
+
+    virtual bool Update(Unit&, const uint32&) override;
+    virtual bool IsRemovedOnDirectExpire() const override { return false; }
+
+protected:
+    bool BuildReplacementPath(Unit& owner, PointsArray& path);
+    void HandleTargetedMovement(Unit& owner, const uint32& time_diff) override;
+    void HandleFinalizedMovement(Unit& owner) override;
+
+private:
+    virtual void _setLocation(Unit& owner, bool catchup) override;
+    bool GetPointAround(G3D::Vector3 const& originalPoint, G3D::Vector3& foundPos, float angle, float distance, bool isOnTheGround);
+    float BuildPath(Unit& owner, PointsArray& path, int32 timeAhead);
+    float BuildPath2(Unit& owner, PointsArray& path, int32 timeAhead);
+    SlotDataSPtr m_slot;
+    uint32 m_formationId;
 };
 
 #endif

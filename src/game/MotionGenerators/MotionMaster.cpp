@@ -34,6 +34,7 @@
 #include "Entities/CreatureLinkingMgr.h"
 #include "Entities/Player.h"
 #include "Entities/Pet.h"
+#include "Formation/Formation.h"
 #include "Server/DBCStores.h"
 #include "Log.h"
 #include "Metric/Metric.h"
@@ -69,7 +70,7 @@ void MotionMaster::Initialize()
         push(movement == nullptr ? &si_idleMovement : movement);
         top()->Initialize(*m_owner);
         if (top()->GetMovementGeneratorType() == WAYPOINT_MOTION_TYPE)
-            (static_cast<WaypointMovementGenerator<Creature>*>(top()))->InitializeWaypointPath(*((Creature*)(m_owner)), m_currentPathId, PATH_NO_PATH, 0, 0);
+            (static_cast<WaypointMovementGenerator<Creature>*>(top()))->InitializeWaypointPath(*((Creature*)(m_owner)), m_currentPathId, PATH_NO_PATH, 0, 0, 0);
     }
     else
         push(&si_idleMovement);
@@ -350,6 +351,26 @@ void MotionMaster::MoveFollow(Unit* target, float dist, float angle, bool asMain
     Mutate(new FollowMovementGenerator(*target, dist, angle, asMain, m_owner->IsPlayer() && !m_owner->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED)));
 }
 
+void MotionMaster::MoveInFormation(SlotDataSPtr& sData, bool asMain /*= false*/)
+{
+    if (m_owner->hasUnitState(UNIT_STAT_LOST_CONTROL))
+        return;
+
+    if (asMain)
+        Clear(false, true);
+    else
+        Clear(!empty()); // avoid resetting if we are already empty
+
+    Creature* masterSlot = sData->GetFormationData()->GetMaster();
+    // ignore movement request if target not exist
+    if (!sData->GetCreature() || !masterSlot)
+        return;
+
+    DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "%s is in formation with %s", m_owner->GetGuidStr().c_str(), masterSlot->GetGuidStr().c_str());
+
+    Mutate(new FormationMovementGenerator(sData, asMain));
+}
+
 void MotionMaster::MoveStay(float x, float y, float z, float o, bool asMain)
 {
     if (m_owner->hasUnitState(UNIT_STAT_LOST_CONTROL))
@@ -427,7 +448,7 @@ void MotionMaster::MoveFleeing(Unit* source, uint32 time)
         Mutate(new FleeingMovementGenerator(*source));
 }
 
-void MotionMaster::MoveWaypoint(uint32 pathId /*=0*/, uint32 source /*=0==PATH_NO_PATH*/, uint32 initialDelay /*=0*/, uint32 overwriteEntry /*=0*/)
+void MotionMaster::MoveWaypoint(uint32 pathId /*= 0*/, uint32 source /*= 0*/, uint32 initialDelay /*= 0*/, uint32 overwriteEntry /*= 0*/, uint32 overwriteGuid /*= 0*/, int32 startPoint /*= -1*/)
 {
     if (m_owner->GetTypeId() == TYPEID_UNIT)
     {
@@ -443,7 +464,7 @@ void MotionMaster::MoveWaypoint(uint32 pathId /*=0*/, uint32 source /*=0==PATH_N
         DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "%s start MoveWaypoint()", m_owner->GetGuidStr().c_str());
         WaypointMovementGenerator<Creature>* newWPMMgen = new WaypointMovementGenerator<Creature>(*creature);
         Mutate(newWPMMgen);
-        newWPMMgen->InitializeWaypointPath(*creature, pathId, (WaypointPathOrigin)source, initialDelay, overwriteEntry);
+        newWPMMgen->InitializeWaypointPath(*creature, pathId, (WaypointPathOrigin)source, initialDelay, overwriteEntry, overwriteGuid, startPoint);
     }
     else
     {

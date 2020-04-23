@@ -3271,6 +3271,7 @@ bool ChatHandler::HandleNpcInfoCommand(char* /*args*/)
     PSendSysMessage(LANG_NPCINFO_LOOT,  cInfo->LootId, cInfo->PickpocketLootId, cInfo->SkinningLootId);
     PSendSysMessage(LANG_NPCINFO_DUNGEON_ID, target->GetInstanceId());
     PSendSysMessage(LANG_NPCINFO_POSITION, float(target->GetPositionX()), float(target->GetPositionY()), float(target->GetPositionZ()));
+    PSendSysMessage("Orientation: %3.5f", target->GetOrientation());
     PSendSysMessage("Combat timer: %u", target->GetCombatManager().GetCombatTimer());
     PSendSysMessage("Is in evade mode: %s", target->GetCombatManager().IsInEvadeMode() ? "true" : "false");
 
@@ -5292,6 +5293,16 @@ bool ChatHandler::HandleMovegensCommand(char* /*args*/)
             case FLEEING_MOTION_TYPE:  SendSysMessage(LANG_MOVEGENS_FEAR);    break;
             case DISTRACT_MOTION_TYPE: SendSysMessage(LANG_MOVEGENS_DISTRACT);  break;
             case EFFECT_MOTION_TYPE: SendSysMessage(LANG_MOVEGENS_EFFECT);  break;
+            case FORMATION_MOTION_TYPE:
+            {
+                Unit* target = static_cast<FormationMovementGenerator const*>(*itr)->GetCurrentTarget();
+
+                if (!target)
+                    SendSysMessage("In formation but lost target!");
+                else
+                    PSendSysMessage("In formation with %s", target->GetGuidStr().c_str());
+                break;
+            }
             default:
                 PSendSysMessage(LANG_MOVEGENS_UNKNOWN, (*itr)->GetMovementGeneratorType());
                 break;

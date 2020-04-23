@@ -372,3 +372,15 @@ Defining a buddy could be done in several way:
 47 SCRIPT_COMMAND_INTERRUPT_SPELL           Interrupt spell in specific slot
                                             * source must be unit
                                             * datalong = SpellType enum CurrentSpellTypes
+
+48 SCRIPT_COMMAND_FORMATION_CONTROL         Control formation behavior
+                                            * source must be an creature
+                                            * datalong = command
+                                            * - command 0 mirroring (creatures that are on left side goes to right side and vice versa)
+                                                          datalong2 = 0 toggle mirroring
+                                                          datalong2 = 1 set mirroring on
+                                                          datalong2 = 2 set mirroring off
+                                            * - command 1 switch template (you can define here a new template for formation shape)
+                                                          datalong2 = formation entry
+                                            * - command 2 disband formation
+                                            * - command 3 reset formation to its default value (can be used after a disband)

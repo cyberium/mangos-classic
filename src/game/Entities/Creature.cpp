@@ -50,6 +50,7 @@
 
 // apply implementation of the singletons
 #include "Policies/Singleton.h"
+#include "Formation/Formation.h"
 
 TrainerSpell const* TrainerSpellData::Find(uint32 spell_id) const
 {
@@ -141,7 +142,7 @@ Creature::Creature(CreatureSubtype subtype) : Unit(),
     m_originalEntry(0), m_dbGuid(0), m_ai(nullptr),
     m_isInvisible(false), m_ignoreMMAP(false), m_forceAttackingCapability(false), m_countSpawns(false),
     m_creatureInfo(nullptr),
-    m_noXP(false), m_noLoot(false), m_noReputation(false)
+    m_noXP(false), m_noLoot(false), m_noReputation(false), m_formationSlot(nullptr)
 {
     m_regenTimer = 200;
     m_valuesCount = UNIT_END;
@@ -159,6 +160,9 @@ Creature::~Creature()
 
 void Creature::CleanupsBeforeDelete()
 {
+    if (m_formationSlot)
+        m_formationSlot->GetFormationData()->OnCreatureDelete(this);
+
     Unit::CleanupsBeforeDelete();
     m_vendorItemCounts.clear();
 }
@@ -648,6 +652,13 @@ void Creature::Update(const uint32 diff)
 
                 if (m_isCreatureLinkingTrigger)
                     GetMap()->GetCreatureLinkingHolder()->DoCreatureLinkingEvent(LINKING_EVENT_RESPAWN, this);
+
+                if (m_formationSlot)
+                {
+                    if (uint16 poolid = sPoolMgr.IsPartOfAPool<Creature>(GetGUIDLow()))
+                        sLog.outString("Error!!!");
+                    m_formationSlot->GetFormationData()->OnRespawn(this);
+                }
 
                 GetMap()->Add(this);
 
@@ -1541,6 +1552,8 @@ bool Creature::LoadFromDB(uint32 dbGuid, Map* map, uint32 newGuid, GenericTransp
 
     AIM_Initialize();
 
+    sFormationMgr.SetFormationSlot(this, GetMap());
+
     // Creature Linking, Initial load is handled like respawn
     if (m_isCreatureLinkingTrigger && IsAlive())
         GetMap()->GetCreatureLinkingHolder()->DoCreatureLinkingEvent(LINKING_EVENT_RESPAWN, this);
@@ -1656,6 +1669,9 @@ void Creature::SetDeathState(DeathState s)
 {
     if ((s == JUST_DIED && !m_isDeadByDefault) || (s == JUST_ALIVED && m_isDeadByDefault))
     {
+        if (m_formationSlot)
+            m_formationSlot->GetFormationData()->OnDeath(this);
+
         if (!m_respawnOverriden)
         {
             if (CreatureData const* data = sObjectMgr.GetCreatureData(m_dbGuid))

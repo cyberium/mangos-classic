@@ -81,7 +81,7 @@ class WaypointMovementGenerator<Creature>
         void Finalize(Creature&);
         void Reset(Creature& creature);
         bool Update(Creature& creature, const uint32& diff);
-        void InitializeWaypointPath(Creature& u, int32 pathId, WaypointPathOrigin wpSource, uint32 initialDelay, uint32 overwriteEntry);
+        void InitializeWaypointPath(Creature& u, int32 pathId, WaypointPathOrigin wpSource, uint32 initialDelay, uint32 overwriteEntry, uint32 overwriteGuid, int32 startPoint = -1);
 
         MovementGeneratorType GetMovementGeneratorType() const { return WAYPOINT_MOTION_TYPE; }
 
@@ -94,7 +94,7 @@ class WaypointMovementGenerator<Creature>
         bool SetNextWaypoint(uint32 pointId);
 
     private:
-        void LoadPath(Creature& creature, int32 pathId, WaypointPathOrigin wpOrigin, uint32 overwriteEntry);
+        void LoadPath(Creature& creature, int32 pathId, WaypointPathOrigin wpOrigin, uint32 overwriteEntry, uint32 overwriteGuid);
         uint32 BuildIntPath(Movement::PointsArray& path, Creature& creature, G3D::Vector3 const& endPos) const;
 
         void Stop(int32 time) { i_nextMoveTime.Reset(time); }

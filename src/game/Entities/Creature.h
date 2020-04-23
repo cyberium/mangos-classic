@@ -24,6 +24,7 @@
 #include "Globals/SharedDefines.h"
 #include "Server/DBCEnums.h"
 #include "Util.h"
+#include "Formation/Formation.h"
 
 #include <list>
 #include <memory>
@@ -653,7 +654,6 @@ class Creature : public Unit
 
         bool CanWalk() const { return (GetCreatureInfo()->InhabitType & INHABIT_GROUND) != 0; }
         bool CanSwim() const { return (GetCreatureInfo()->InhabitType & INHABIT_WATER) != 0; }
-        bool IsSwimming() const { return m_movementInfo.HasMovementFlag(MOVEFLAG_SWIMMING); }
         bool CanFly() const override { return (GetCreatureInfo()->InhabitType & INHABIT_AIR) || m_movementInfo.HasMovementFlag((MovementFlags)(MOVEFLAG_LEVITATING | MOVEFLAG_HOVER | MOVEFLAG_CAN_FLY)); }
         bool IsFlying() const override { return m_movementInfo.HasMovementFlag((MovementFlags)(MOVEFLAG_FLYING | MOVEFLAG_HOVER | MOVEFLAG_LEVITATING)); }
         bool IsTrainerOf(Player* pPlayer, bool msg) const;
@@ -897,6 +897,12 @@ class Creature : public Unit
         void RegisterHitBySpell(uint32 spellId);
         void ResetSpellHitCounter();
 
+        // formation related methods
+        void SetFormationEntry(SlotDataSPtr& sData) { m_formationSlot = sData; }
+        SlotDataSPtr GetFormationSlot() override { return m_formationSlot; }
+        virtual bool IsFormationMaster() const override { return m_formationSlot ? m_formationSlot->GetSlotId() == 0 : false; }
+        virtual void RemoveFromFormation() override { m_formationSlot = nullptr; }
+
     protected:
         bool MeetsSelectAttackingRequirement(Unit* pTarget, SpellEntry const* pSpellInfo, uint32 selectFlags, SelectAttackingTargetParams params) const;
 
@@ -960,6 +966,9 @@ class Creature : public Unit
 
         // spell scripting persistency
         std::set<uint32> m_hitBySpells;
+
+        // if set it mean that creature is in formation with other creatures
+        SlotDataSPtr m_formationSlot;
 
     private:
         GridReference<Creature> m_gridRef;

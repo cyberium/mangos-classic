@@ -781,6 +781,18 @@ void ScriptMgr::LoadScripts(ScriptMapMapName& scripts, const char* tablename)
                 }
                 break;
             }
+            case SCRIPT_COMMAND_FORMATION_SET_TEMPLATE:     // 48
+            {
+                if (tmp.formationData.command == 1 && tmp.formationData.data1 != 0)
+                {
+                    if (!sFormationMgr.GetFormationEntry(tmp.formationData.data1))
+                    {
+                        sLog.outErrorDb("Table `%s` uses invalid formation id(%u) for script id %u.", tablename, tmp.formationData.data1, tmp.id);
+                        continue;
+                    }
+                }
+                break;
+            }
             default:
             {
                 sLog.outErrorDb("Table `%s` unknown command %u, skipping.", tablename, tmp.command);
@@ -2405,6 +2417,77 @@ bool ScriptAction::HandleScriptStep()
             Unit* unitSource = static_cast<Unit*>(pSource);
 
             unitSource->InterruptSpell((CurrentSpellTypes)m_script->interruptSpell.currentSpellType);
+            break;
+        }
+        case SCRIPT_COMMAND_FORMATION_SET_TEMPLATE:         // 48
+        {
+            if (LogIfNotCreature(pSource))
+                return false;
+
+            Creature* creature = static_cast<Creature*>(pSource);
+
+            auto currSlot = creature->GetFormationSlot();
+            if (!currSlot)
+            {
+                sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed. %s in not in formation!", m_table, m_script->id, m_script->command, creature->GetGuidStr().c_str());
+                return true;
+            }
+
+            auto formationData = currSlot->GetFormationData();
+
+            switch (m_script->formationData.command)
+            {
+                case 0:                                     // mirror mode
+                {
+                    switch (m_script->formationData.data1)
+                    {
+                        case 0:
+                            formationData->SetMirrorState(!formationData->GetMirrorState());
+                            break;
+                        case 1:
+                            formationData->SetMirrorState(true);
+                            break;
+                        case  2:
+                            formationData->SetMirrorState(false);
+                            break;
+                        default:
+                            sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed. Invalid value for datalong!", m_table, m_script->id, m_script->command, m_script->formationData.data1);
+                            break;
+                    }
+                    break;
+                }
+
+                case 1:                                     // set specific template
+                {
+                    auto fEntry = sFormationMgr.GetFormationEntry(m_script->formationData.data1);
+                    if (!fEntry)
+                    {
+                        sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed. Formation id(%u) is not found.", m_table, m_script->id, m_script->command, m_script->formationData.data1);
+                        return true;
+                    }
+
+                    if (!currSlot->GetFormationData()->SwitchFormation(fEntry))
+                        sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed.", m_table, m_script->id, m_script->command);
+                    break;
+                }
+
+                case 2:                                     // disband formation
+                {
+                    formationData->Disband();
+                    break;
+                }
+
+                case 3:                                     // Reset formation members
+                {
+                    formationData->Reset();
+                    break;
+                }
+
+                default:
+                    sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed. Invalid value for formation command!", m_table, m_script->id, m_script->command, m_script->formationData.command);
+                    break;
+            }
+            
             break;
         }
         default:

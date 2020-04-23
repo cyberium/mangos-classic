@@ -54,6 +54,7 @@
 #include <fstream>
 #include <map>
 #include <typeinfo>
+#include <iomanip>
 
 static uint32 ReputationRankStrIndex[MAX_REPUTATION_RANK] =
 {
@@ -2281,6 +2282,125 @@ bool ChatHandler::HandleNpcShowLootCommand(char* /*args*/)
     return true;
 }
 
+// show detailed information of creature formation if exist
+bool ChatHandler::HandleNpcFormationInfoCommand(char* /*args*/)
+{
+    Creature* creature = getSelectedCreature();
+
+    if (!creature)
+    {
+        SendSysMessage(LANG_SELECT_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    auto currSlot = creature->GetFormationSlot();
+    if (!currSlot)
+    {
+        SendSysMessage("Creature is not in formation");
+        return true;
+    }
+
+    PSendSysMessage("Creature is in group id(%u) with formation template(%u) in slot(%u)",
+        currSlot->GetFormationData()->GetGroupGuid(), currSlot->GetFormationData()->GetFormationId(), currSlot->GetSlotId() );
+
+    auto slotMap = currSlot->GetFormationData()->GetSlots();
+    if (slotMap.size() > 1)
+    {
+        SendSysMessage("Following creatures are part of the formation");
+        for (auto slotItr : slotMap)
+        {
+            auto slot = slotItr.second;
+
+            std::stringstream cinfo;
+            cinfo << "Slot(" << slot->GetSlotId() << ") is ";
+
+            Creature* creature = slot->GetCreature();
+            if (creature)
+            {
+                cinfo << "filled with " << creature->GetGuidStr();
+
+            }
+            else
+                cinfo << "not filled";
+
+            cinfo << " default guid is " << slot->GetDefaultGuid();
+
+            uint32 angle = uint32(slot->GetAngle() * (180 / M_PI_F));
+
+            cinfo << " with ang( " << angle << ") dist(" << std::fixed << std::setprecision(1) << slot->GetDistance() << ")";
+
+            SendSysMessage(cinfo.str().c_str());
+        }
+    }
+
+    return true;
+}
+
+// reset creature formation template
+bool ChatHandler::HandleNpcFormationResetCommand(char* /*args*/)
+{
+    Creature* creature = getSelectedCreature();
+
+    if (!creature)
+    {
+        SendSysMessage(LANG_SELECT_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    auto currSlot = creature->GetFormationSlot();
+    if (!currSlot)
+    {
+        SendSysMessage("Creature is not in formation");
+        return true;
+    }
+
+    currSlot->GetFormationData()->Reset();
+
+    // need implementation
+    PSendSysMessage("Formation is reset to default!");
+    return true;
+}
+
+// change creature formation template
+bool ChatHandler::HandleNpcFormationSwitchCommand(char* args)
+{
+    Creature* creature = getSelectedCreature();
+
+    if (!creature)
+    {
+        SendSysMessage(LANG_SELECT_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    auto currSlot = creature->GetFormationSlot();
+    if (!currSlot)
+    {
+        SendSysMessage("Creature is not in formation");
+        return true;
+    }
+
+    uint32 formationId;
+    if (!ExtractUInt32(&args, formationId))
+    {
+        PSendSysMessage("Please provide a valid formation id!\n.npc formation switch #formationId");
+        return false;
+    }
+
+    auto fEntry = sFormationMgr.GetFormationEntry(formationId);
+    if (!fEntry)
+    {
+        PSendSysMessage("Provided formation id is not found!");
+        return false;
+    }
+
+    if (!currSlot->GetFormationData()->SwitchFormation(fEntry))
+        PSendSysMessage("Failed to switch formation template!");
+    return true;
+}
+
 // TODO: NpcCommands that need to be fixed :
 
 bool ChatHandler::HandleNpcNameCommand(char* /*args*/)
@@ -2581,6 +2701,9 @@ inline Creature* Helper_CreateWaypointFor(Creature* wpOwner, WaypointPathOrigin 
     settings.waypointId = wpId;
     settings.spawnPathId = pathId;
     settings.pathOrigin = uint32(wpOrigin);
+
+    // make them fly (need to confirm it work)
+    settings.spawnDataEntry = 2;
 
     Creature* wpCreature = WorldObject::SummonCreature(settings, wpOwner->GetMap());
 

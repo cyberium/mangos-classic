@@ -40,6 +40,7 @@
 #include "Chat/Chat.h"
 #include "Weather/Weather.h"
 #include "AI/ScriptDevAI/ScriptDevAIMgr.h"
+#include "Formation/Formation.h"
 
 Map::~Map()
 {
@@ -740,6 +741,10 @@ void Map::Update(const uint32& t_diff)
     }
 
     meas.add_field("count", std::to_string(static_cast<int32>(count)));
+
+    // update formations
+    for (auto& fData : m_formationData)
+        fData.second->Update(t_diff);
 
     // Send world objects and item update field changes
     SendObjectUpdates();
@@ -2555,4 +2560,20 @@ void Map::AddToSpawnCount(const ObjectGuid& guid)
 void Map::RemoveFromSpawnCount(const ObjectGuid& guid)
 {
     m_spawnedCount[guid.GetEntry()].erase(guid);
+}
+
+FormationData* Map::GetFormationData(GroupsTableEntrySPtr& grpEntry)
+{
+    FormationData* fData = nullptr;
+
+    auto dataItr = m_formationData.find(grpEntry->guid);
+    if (dataItr == m_formationData.end())
+    {
+        fData = new FormationData(grpEntry);
+        m_formationData.emplace(grpEntry->guid, fData);
+    }
+    else
+        fData = dataItr->second.get();
+
+    return fData;
 }

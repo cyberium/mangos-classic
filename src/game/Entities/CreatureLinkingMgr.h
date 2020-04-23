@@ -102,6 +102,8 @@ class CreatureLinkingMgr
 
     public:                                                 // Initialisation
         void LoadFromDB();
+        void DeleteGuid(uint32 guid);
+        void DeleteEntry(uint32 entry, uint32 mapid);
 
     public:                                                 // Accessors
         // This functions checks if the NPC triggers actions for other NPCs

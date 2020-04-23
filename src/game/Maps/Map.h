@@ -35,6 +35,7 @@
 #include "Entities/CreatureLinkingMgr.h"
 #include "vmap/DynamicTree.h"
 #include "Multithreading/Messager.h"
+#include "Formation/Formation.h"
 
 #include <bitset>
 #include <functional>
@@ -332,6 +333,9 @@ class Map : public GridRefManager<NGridType>
         void AddTransport(Transport* transport);
         void RemoveTransport(Transport* transport);
 
+        // formation data
+        FormationData* GetFormationData(GroupsTableEntrySPtr& grpEntry);
+
     private:
         void LoadMapAndVMap(int gx, int gy);
 
@@ -436,6 +440,9 @@ class Map : public GridRefManager<NGridType>
         TransportSet m_transports;
 
         std::unordered_map<uint32, std::set<ObjectGuid>> m_spawnedCount;
+
+        // Formations data
+        FormationDataMap m_formationData;
 };
 
 class WorldMap : public Map

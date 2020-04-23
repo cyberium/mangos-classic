@@ -165,6 +165,34 @@ void CreatureLinkingMgr::LoadFromDB()
     delete result;
 }
 
+// remove guid from linking system (should only used before server start)
+void CreatureLinkingMgr::DeleteGuid(uint32 guid)
+{
+    // guid case
+    auto bounds = m_creatureLinkingGuidMap.equal_range(guid);
+
+    for (auto itr = bounds.first; itr != bounds.second;)
+    {
+        auto currentItr = itr++;
+        m_creatureLinkingGuidMap.erase(currentItr);
+    }
+    m_eventGuidTriggers.erase(guid);
+}
+
+// remove entry from linking system (should only used before server start)
+void CreatureLinkingMgr::DeleteEntry(uint32 entry, uint32 mapid)
+{
+    // entry case
+    auto bounds = m_creatureLinkingMap.equal_range(entry);
+    for (auto itr = bounds.first; itr != bounds.second;)
+    {
+        auto currentItr = itr++;
+        if (currentItr->second.mapId = mapid)
+            m_creatureLinkingMap.erase(currentItr);
+    }
+    m_eventTriggers.erase(entry);
+}
+
 /** This function is used to check if a DB-Entry is valid
  *
  *  @param byEntry: is the first parameter of the function a npc entry or a npc guid?

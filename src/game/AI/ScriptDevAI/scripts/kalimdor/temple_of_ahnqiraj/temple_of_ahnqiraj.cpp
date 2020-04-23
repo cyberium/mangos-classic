@@ -381,6 +381,7 @@ void instance_temple_of_ahnqiraj::Update(uint32 uiDiff)
 
     if (GetData(TYPE_SKERAM) == NOT_STARTED)
     {
+/*
         if (m_uiSkeramProphecyTimer < uiDiff)
         {
             if (Player* player = GetPlayerInMap())
@@ -388,7 +389,7 @@ void instance_temple_of_ahnqiraj::Update(uint32 uiDiff)
             m_uiSkeramProphecyTimer = urand(3, 4) * MINUTE * IN_MILLISECONDS;   // Timer is guesswork
         }
         else
-            m_uiSkeramProphecyTimer -= uiDiff;
+            m_uiSkeramProphecyTimer -= uiDiff;*/
     }
 
     if (GetData(TYPE_CTHUN) == IN_PROGRESS || GetData(TYPE_CTHUN) == DONE)

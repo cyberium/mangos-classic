@@ -22,6 +22,7 @@
 #include "Common.h"
 #include "Globals/SharedDefines.h"
 #include "MotionGenerators/WaypointManager.h"
+#include "Formation/Formation.h"
 
 #include <stack>
 #include <vector>
@@ -70,6 +71,8 @@ enum MovementGeneratorType
     EXTERNAL_WAYPOINT_MOVE          = 17,                   // Only used in UnitAI::MovementInform when a waypoint is reached. The pathId >= 0 is added as additonal value
     EXTERNAL_WAYPOINT_MOVE_START    = 18,                   // Only used in UnitAI::MovementInform when a waypoint is started. The pathId >= 0 is added as additional value
     EXTERNAL_WAYPOINT_FINISHED_LAST = 19,                   // Only used in UnitAI::MovementInform when the waittime of the last wp is finished The pathId >= 0 is added as additional value
+
+    FORMATION_MOTION_TYPE           = 20,                   // TargetedMovementGenerator.h
 };
 
 enum MMCleanFlag
@@ -130,6 +133,7 @@ class MotionMaster : private std::stack<MovementGenerator*>
         void MoveRandomAroundPoint(float x, float y, float z, float radius, float verticalZ = 0.0f, uint32 timer = 0);
         void MoveTargetedHome(bool runHome = true);
         void MoveFollow(Unit* target, float dist, float angle, bool asMain = false);
+        void MoveInFormation(SlotDataSPtr& sData, bool asMain = false);
         void MoveStay(float x, float y, float z, float o = 0, bool asMain = false);
         void MoveChase(Unit* target, float dist = 0.0f, float angle = 0.0f, bool moveFurther = false, bool walk = false, bool combat = true);
         void DistanceYourself(float dist);
@@ -142,7 +146,7 @@ class MotionMaster : private std::stack<MovementGenerator*>
         void MovePath(std::vector<G3D::Vector3>& path, float o, ForcedMovement forcedMovement = FORCED_MOVEMENT_NONE, bool flying = false);
         void MovePath(int32 pathId, WaypointPathOrigin wpOrigin = PATH_NO_PATH, ForcedMovement forcedMovement = FORCED_MOVEMENT_NONE, bool flying = false, float speed = 0.f, bool cyclic = false);
         void MoveRetreat(float x, float y, float z, float o, uint32 delay);
-        void MoveWaypoint(uint32 pathId = 0, uint32 source = 0, uint32 initialDelay = 0, uint32 overwriteEntry = 0);
+        void MoveWaypoint(uint32 pathId = 0, uint32 source = 0, uint32 initialDelay = 0, uint32 overwriteEntry = 0, uint32 overwriteGuid = 0, int32 startPoint = -1);
         void MoveTaxi();
         void MoveDistract(uint32 timer);
         void MoveCharge(float x, float y, float z, float speed, uint32 id = EVENT_CHARGE);
@@ -167,6 +171,8 @@ class MotionMaster : private std::stack<MovementGenerator*>
         void UnpauseWaypoints();
 
         void UnMarkFollowMovegens();
+
+        void RequestUpdate();
 
     private:
         void Mutate(MovementGenerator* m);                  // use Move* functions instead

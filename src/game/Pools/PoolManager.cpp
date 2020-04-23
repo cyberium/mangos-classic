@@ -309,11 +309,22 @@ void PoolGroup<Creature>::Despawn1Object(MapPersistentState& mapState, uint32 gu
         // for non-instanceable maps pool spawn can be at different map from provided mapState
         if (MapPersistentState* dataMapState = mapState.GetMapId() == data->mapid ? &mapState : sMapPersistentStateMgr.GetPersistentState(data->mapid, 0))
         {
-            dataMapState->RemoveCreatureFromGrid(guid, data);
+            Creature* creature = nullptr;
 
             if (Map* dataMap = dataMapState->GetMap())
-                if (Creature* pCreature = dataMap->GetCreature(data->GetObjectGuid(guid)))
-                    pCreature->AddObjectToRemoveList();
+                creature = dataMap->GetCreature(data->GetObjectGuid(guid));
+
+            if (creature)
+            {
+                if (creature->GetFormationSlot())
+                {
+                    // error should not be possible!
+                    sLog.outError("Error! Pool system trying to remove from grid a grouped creature(%s) with poolId(%u)!", creature->GetGuidStr().c_str(), poolId);
+                }
+
+                creature->AddObjectToRemoveList();
+            }
+            dataMapState->RemoveCreatureFromGrid(guid, data);
         }
     }
 }

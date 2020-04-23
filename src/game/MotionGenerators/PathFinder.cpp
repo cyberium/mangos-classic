@@ -127,6 +127,16 @@ bool PathFinder::calculate(const Vector3& start, Vector3& dest, bool forceDest/*
     return true;
 }
 
+float PathFinder::getLengthnono() const
+{
+    MANGOS_ASSERT(m_pathPoints.size());
+    float length = 0.0f;
+    uint32 maxIndex = m_pathPoints.size() - 1;
+    for (uint32 i = 1; i <= maxIndex; ++i)
+        length += (m_pathPoints[i - 1] - m_pathPoints[i]).length();
+    return length;
+}
+
 dtPolyRef PathFinder::getPathPolyByPosition(const dtPolyRef* polyPath, uint32 polyPathSize, const float* point, float* distance) const
 {
     if (!polyPath || !polyPathSize)

@@ -81,6 +81,8 @@ class PathFinder
         PointsArray& getPath() { return m_pathPoints; }
         PathType getPathType() const { return m_type; }
 
+        float getLengthnono() const;
+
     private:
 
 

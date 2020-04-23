@@ -142,6 +142,9 @@ class PoolManager
         template<typename T>
         uint16 IsPartOfAPool(uint32 db_guid_or_pool_id) const;
 
+        template<typename T>
+        void RemoveFromPool(uint32 db_guid);
+
         // Method that tell if the creature/gameobject/pool is part of top level pool and return the pool id if yes
         template<typename T>
         uint16 IsPartOfTopPool(uint32 db_guid_or_pool_id) const
@@ -210,6 +213,14 @@ class PoolManager
 };
 
 #define sPoolMgr MaNGOS::Singleton<PoolManager>::Instance()
+
+// remove a creature from the pool
+template <> inline void PoolManager::RemoveFromPool<Creature>(uint32 db_guid)
+{
+    auto itr = mCreatureSearchMap.find(db_guid);
+    if (itr != mCreatureSearchMap.end())
+        mCreatureSearchMap.erase(itr);
+}
 
 // Method that tell if the creature is part of a pool and return the pool id if yes
 template<>
