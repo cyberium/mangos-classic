@@ -131,6 +131,7 @@ namespace Movement
             const Vector3 FinalDestination() const;
             const Vector3 CurrentDestination() const { return Initialized() ? spline.getPoint(point_Idx + 1) : Vector3();}
             int32 currentPathIdx() const;
+            int32 GetRawPathIndex() const { return point_Idx; }
 
             Vector3 GetPoint(uint32 idx) const { return spline.getPoint(idx); }
 

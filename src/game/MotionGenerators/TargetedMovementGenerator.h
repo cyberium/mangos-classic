@@ -264,7 +264,6 @@ private:
     virtual void _setLocation(Unit& owner, bool catchup) override;
     bool GetPointAround(G3D::Vector3 const& originalPoint, G3D::Vector3& foundPos, float angle, float distance, bool isOnTheGround);
     float BuildPath(Unit& owner, PointsArray& path, int32 timeAhead);
-    float BuildPath2(Unit& owner, PointsArray& path, int32 timeAhead);
     SlotDataSPtr m_slot;
     uint32 m_formationId;
 };
