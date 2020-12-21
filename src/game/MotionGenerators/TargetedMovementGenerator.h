@@ -244,7 +244,7 @@ class FormationMovementGenerator : public FollowMovementGenerator
 {
 public:
     FormationMovementGenerator(SlotDataSPtr& sData, bool main) :
-        FollowMovementGenerator(*sData->GetFormationData()->GetMaster(), sData->GetDistance(), float(sData->GetAngle()), main),
+        FollowMovementGenerator(*sData->GetFormationData()->GetMaster(), sData->GetDistance(), float(sData->GetAngle()), main, false),
         m_slot(sData), m_formationId(m_slot->GetFormationId())
     {
     }
@@ -253,7 +253,7 @@ public:
     MovementGeneratorType GetMovementGeneratorType() const override { return FORMATION_MOTION_TYPE; }
 
     virtual bool Update(Unit&, const uint32&) override;
-    virtual bool IsRemovedOnDirectExpire() const override { return false; }
+    //virtual bool IsRemovedOnDirectExpire() const override { return false; }
 
 protected:
     bool BuildReplacementPath(Unit& owner, PointsArray& path);

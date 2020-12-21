@@ -1146,6 +1146,7 @@ bool FormationMovementGenerator::GetPointAround(G3D::Vector3 const& originalPoin
 
 bool FormationMovementGenerator::BuildReplacementPath(Unit& owner, PointsArray& path)
 {
+    sLog.outString("Build replacement Path!!");
     auto const& masterSpline = i_target->movespline;
     Vector3 masterPos(i_target->GetPositionX(), i_target->GetPositionY(), i_target->GetPositionZ());
 

@@ -105,7 +105,6 @@ void WaypointMovementGenerator<Creature>::InitializeWaypointPath(Creature& u, in
 
     i_nextMoveTime.Reset(initialDelay);
 
-    uint32 startPoint = -1;                                 // TODO add an argument to set the start point
     if (startPoint >= 0)
     {
         auto selPoint = i_path->find(startPoint);
