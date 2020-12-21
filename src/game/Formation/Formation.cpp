@@ -233,6 +233,7 @@ void FormationMgr::LoadCreaturesFormation()
 
             FormationSlotInfoMap tempSlotInfoMap;
             bool foundMasterSlot = false;
+            uint32 dist = 0;
             for (auto itr = bounds.first; itr != bounds.second; ++itr)
             {
                 auto& memberGuid = std::get<0>(itr->second);
@@ -240,14 +241,33 @@ void FormationMgr::LoadCreaturesFormation()
                 auto slotEntryItr = groupTemplateEntry->formationEntry->slots.find(slotId);
 
                 if (slotId == 0)
+                {
                     foundMasterSlot = true;
+                    dist = slotEntryItr->second->distance;
+                }
 
                 if (slotEntryItr != groupTemplateEntry->formationEntry->slots.end())
                 {
+                    if (slotId == 0)
+                    {
+                        foundMasterSlot = true;
+                        dist = slotEntryItr->second->distance;
+                    }
+
                     tempSlotInfoMap.emplace(memberGuid, new FormationSlotInfo(memberGuid, slotEntryItr->second, gEntry));
                 }
                 else
-                    sLog.outErrorDb("Error in table group_member. Slot(%u) is not defined in group_formation_template for guid(%u)", slotId, memberGuid);
+                {
+                    if (groupTemplateEntry->formationEntry->formationId >= 10 && groupTemplateEntry->formationEntry->formationId < 17)
+                    {
+                        // we should create and empty slot with only distance set
+                        groupTemplateEntry->formationEntry->slots.emplace(slotId, new FormationSlotEntry(slotId, 0, dist, groupTemplateEntry->formationEntry));
+                        slotEntryItr = groupTemplateEntry->formationEntry->slots.find(slotId);
+                        tempSlotInfoMap.emplace(memberGuid, new FormationSlotInfo(memberGuid, slotEntryItr->second, gEntry));
+                    }
+                    else
+                        sLog.outErrorDb("Error in table group_member. Slot(%u) is not defined in group_formation_template for guid(%u)", slotId, memberGuid);
+                }
             }
 
             if (foundMasterSlot)
@@ -444,14 +464,14 @@ void FormationData::FillSlot(FormationSlotInfoSPtr& slot, Creature* creature)
         switch (creature->GetDefaultMovementType())
         {
             case RANDOM_MOTION_TYPE:
-                m_masterMotionType = FormatationType::FORMATION_TYPE_MASTER_RANDOM;
+                m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_RANDOM;
                 break;
             case WAYPOINT_MOTION_TYPE:
-                m_masterMotionType = FormatationType::FORMATION_TYPE_MASTER_WAYPOINT;
+                m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_WAYPOINT;
                 break;
             default:
                 sLog.outError("FormationData::FillSlot> Master have not recognized default movement type for formation! Forced to random.");
-                m_masterMotionType = FormatationType::FORMATION_TYPE_MASTER_RANDOM;
+                m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_RANDOM;
                 break;
         }
     }
@@ -495,13 +515,13 @@ void FormationData::SetMasterMovement(Creature* master)
 {
     auto& masterSlot = m_slotMap[0];
     master->GetMotionMaster()->Clear(true, true);
-    if (m_masterMotionType == FormatationType::FORMATION_TYPE_MASTER_WAYPOINT)
+    if (m_masterMotionType == MasterMotionType::FORMATION_TYPE_MASTER_WAYPOINT)
     {
         master->GetMotionMaster()->MoveWaypoint(m_wpPathId, 0, 0, 0, masterSlot->GetDefaultGuid(), m_lastWP);
         m_wpPathId = 0;
         m_lastWP = 0;
     }
-    else if (m_masterMotionType == FormatationType::FORMATION_TYPE_MASTER_RANDOM)
+    else if (m_masterMotionType == MasterMotionType::FORMATION_TYPE_MASTER_RANDOM)
     {
         float x, y, z, radius;
         m_realMaster->GetRespawnCoord(x, y, z, nullptr, &radius);

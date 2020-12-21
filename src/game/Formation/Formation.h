@@ -33,6 +33,19 @@ class MovementGenerator;
 class PathFinder;
 class Map;
 
+enum GroupFormationType
+{
+    GROUP_FORMATION_TYPE_RANDOM              = 0,
+    GROUP_FORMATION_TYPE_SINGLE_FILE         = 1,
+    GROUP_FORMATION_TYPE_SIDE_BY_SIDE        = 2,
+    GROUP_FORMATION_TYPE_LIKE_GEESE          = 3,
+    GROUP_FORMATION_TYPE_FANNED_OUT_BEHIND   = 4,
+    GROUP_FORMATION_TYPE_FANNED_OUT_IN_FRONT = 5,
+    GROUP_FORMATION_TYPE_CIRCLE_THE_LEADER   = 6
+};
+
+
+
 namespace G3D
 {
 class Vector3;
@@ -147,7 +160,7 @@ private:
 };
 template<> void FormationMgr::SetFormationSlot<Creature>(Creature* creature, Map* map);
 
-enum class FormatationType
+enum class MasterMotionType
 {
     FORMATION_TYPE_MASTER_RANDOM,
     FORMATION_TYPE_MASTER_WAYPOINT
@@ -162,7 +175,7 @@ public:
     FormationData(GroupsTableEntrySPtr groupTableEntry) :
         m_groupTableEntry(groupTableEntry), m_currentFormationEntry(groupTableEntry->groupTemplateEntry->formationEntry),
         m_formationEnabled(true), m_realMaster(nullptr), m_mirrorState(false),
-        m_masterMotionType(FormatationType::FORMATION_TYPE_MASTER_RANDOM), m_masterCheck(0),
+        m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM), m_masterCheck(0),
         m_lastWP(0), m_wpPathId(0)
     {}
     FormationData() = delete;
@@ -209,7 +222,7 @@ private:
 
     Creature* m_realMaster;
 
-    FormatationType m_masterMotionType;
+    MasterMotionType m_masterMotionType;
     ShortTimeTracker m_masterCheck;
 };
 
@@ -246,6 +259,7 @@ private:
     FormationData* m_formationData;
     bool m_recomputePosition;
 };
+
 
  #define sFormationMgr MaNGOS::Singleton<FormationMgr>::Instance()
 
