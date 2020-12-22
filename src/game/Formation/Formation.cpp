@@ -436,6 +436,67 @@ void FormationData::Disband()
 
 void FormationData::FillSlot(FormationSlotInfoSPtr& slot, Creature* creature)
 {
+    // fixup formation slot data
+    if (slot->GetFormationId() >= 10 && slot->GetFormationId() < 17) // TODO need to be removed
+    {
+        if (slot->GetFormationId() == 11)
+        {
+            if (slot->GetSlotId() != 0)
+            {
+                //slot->slotEntry->angle = (angle * M_PI_F) / 180;
+                slot->slotEntry->angle = M_PI_F;
+                slot->slotEntry->distance = GetMaster()->GetFormationSlot()->GetDistance() * slot->GetSlotId();
+            }
+        }
+        else if (slot->GetFormationId() == 12)
+        {
+            if (slot->GetSlotId() != 0)
+            {
+                //slot->slotEntry->angle = (angle * M_PI_F) / 180;
+                if ((slot->GetSlotId() & 1) == 0)
+                    slot->slotEntry->angle = M_PI_F / 2.0f;
+                else
+                    slot->slotEntry->angle = (M_PI_F / 2.0f) + M_PI_F;
+                slot->slotEntry->distance = GetMaster()->GetFormationSlot()->GetDistance() * (((slot->GetSlotId() - 1)/ 2) + 1);
+            }
+        }
+        else if (slot->GetFormationId() == 13)
+        {
+            if (slot->GetSlotId() != 0)
+            {
+                //slot->slotEntry->angle = (angle * M_PI_F) / 180;
+                if ((slot->GetSlotId() & 1) == 0)
+                    slot->slotEntry->angle = M_PI_F + (M_PI_F / 4.0f);
+                else
+                    slot->slotEntry->angle = M_PI_F - (M_PI_F / 3.0f);
+                slot->slotEntry->distance = GetMaster()->GetFormationSlot()->GetDistance() * (((slot->GetSlotId() - 1) / 2) + 1);
+            }
+        }
+        else if (slot->GetFormationId() == 14)
+        {
+            if (slot->GetSlotId() != 0)
+            {
+                slot->slotEntry->angle = (M_PI_F / 2.0f) + (M_PI_F / float(slot->slotEntry->formationEntry->slots.size() - 1)) * (slot->GetSlotId() - 1);
+            }
+        }
+        else if (slot->GetFormationId() == 15)
+        {
+            if (slot->GetSlotId() != 0)
+            {
+                slot->slotEntry->angle = M_PI_F + (M_PI_F / 2.0f) + (M_PI_F / float(slot->slotEntry->formationEntry->slots.size() - 1)) * (slot->GetSlotId() - 1);
+                if (slot->slotEntry->angle > M_PI_F * 2.0f)
+                    slot->slotEntry->angle = slot->slotEntry->angle - M_PI_F * 2.0f;
+            }
+        }
+        else if (slot->GetFormationId() == 16)
+        {
+            if (slot->GetSlotId() != 0)
+            {
+                slot->slotEntry->angle = ((M_PI_F * 2.0f) / float(slot->slotEntry->formationEntry->slots.size() - 1)) * (slot->GetSlotId() - 1);
+            }
+        }
+    }
+
     SlotDataSPtr sData = nullptr;
     auto existingSlotItr = m_slotMap.find(slot->GetSlotId());
     if (existingSlotItr == m_slotMap.end())
