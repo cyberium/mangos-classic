@@ -2459,15 +2459,16 @@ bool ScriptAction::HandleScriptStep()
 
                 case 1:                                     // set specific template
                 {
-                    auto fEntry = sFormationMgr.GetFormationEntry(m_script->formationData.data1);
-                    if (!fEntry)
+                    if (m_script->formationData.data1 < MAX_GROUP_FORMATION_TYPE)
                     {
-                        sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed. Formation id(%u) is not found.", m_table, m_script->id, m_script->command, m_script->formationData.data1);
+                        if (!currSlot->GetFormationData()->SwitchFormation(m_script->formationData.data1))
+                            sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed.", m_table, m_script->id, m_script->command);
+                    }
+                    else
+                    {
+                        sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed. Formation id(%u) is not correct.", m_table, m_script->id, m_script->command, m_script->formationData.data1);
                         return true;
                     }
-
-                    if (!currSlot->GetFormationData()->SwitchFormation(fEntry))
-                        sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed.", m_table, m_script->id, m_script->command);
                     break;
                 }
 
@@ -2487,7 +2488,7 @@ bool ScriptAction::HandleScriptStep()
                     sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed. Invalid value for formation command!", m_table, m_script->id, m_script->command, m_script->formationData.command);
                     break;
             }
-            
+
             break;
         }
         default:

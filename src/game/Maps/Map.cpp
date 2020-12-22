@@ -2562,7 +2562,7 @@ void Map::RemoveFromSpawnCount(const ObjectGuid& guid)
     m_spawnedCount[guid.GetEntry()].erase(guid);
 }
 
-FormationData* Map::GetFormationData(GroupsTableEntrySPtr& grpEntry)
+FormationData* Map::GetFormationData(CreaturesGroupEntrySPtr& grpEntry)
 {
     FormationData* fData = nullptr;
 

@@ -23,9 +23,9 @@
 struct FormationEntry;
 struct FormationSlotEntry;
 struct SlotData;
-struct GroupTemplateEntry;
+struct CreraturesGroupTemplateEntry;
 struct FormationSlotInfo;
-struct GroupsTableEntry;
+struct CreaturesGroupEntry;
 class FormationMgr;
 class Creature;
 class FormationData;
@@ -33,6 +33,8 @@ class MovementGenerator;
 class PathFinder;
 class Map;
 
+
+const uint32 MAX_GROUP_FORMATION_TYPE = 7;
 enum GroupFormationType
 {
     GROUP_FORMATION_TYPE_RANDOM              = 0,
@@ -44,8 +46,6 @@ enum GroupFormationType
     GROUP_FORMATION_TYPE_CIRCLE_THE_LEADER   = 6
 };
 
-
-
 namespace G3D
 {
 class Vector3;
@@ -54,7 +54,7 @@ class PointsArray;
 
 typedef std::shared_ptr<FormationSlotEntry> FormationSlotEntrySPtr;
 typedef std::map<uint32, FormationSlotEntrySPtr> FormationSlotEntryMap;
-typedef std::shared_ptr<GroupTemplateEntry> GroupTemplateEntrySPtr;
+typedef std::shared_ptr<CreraturesGroupTemplateEntry> GroupTemplateEntrySPtr;
 typedef std::map<uint32, GroupTemplateEntrySPtr> GroupTemplateEntryMap;
 typedef std::shared_ptr<FormationSlotInfo> FormationSlotInfoSPtr;
 typedef std::map<uint32, FormationSlotInfoSPtr> FormationSlotInfoMap;
@@ -63,8 +63,9 @@ typedef std::map<uint32, FormationEntrySPtr> FormationEntryMap;
 typedef std::shared_ptr<FormationData> FormationDataSPtr;
 typedef std::map<uint32, FormationDataSPtr> FormationDataMap;
 typedef std::shared_ptr<SlotData> SlotDataSPtr;
-typedef std::shared_ptr<GroupsTableEntry> GroupsTableEntrySPtr;
-typedef std::map<uint32, GroupsTableEntrySPtr> GroupsTableEntryMap;
+typedef std::shared_ptr<CreaturesGroupEntry> CreaturesGroupEntrySPtr;
+typedef std::map<uint32, CreaturesGroupEntrySPtr> CreaturesGroupEntryMap;
+typedef std::map<uint32, uint32> GroupGuidMap;
 
 struct FormationSlotEntry
 {
@@ -89,25 +90,30 @@ struct FormationSlotEntry
 struct FormationEntry
 {
     uint32 formationId;
+    GroupFormationType formationType;
+    uint32 options;
+    float distance;
+    CreaturesGroupEntrySPtr groupTableEntry;
+
     FormationSlotEntryMap slots;
 };
 
-struct GroupTemplateEntry
+struct CreraturesGroupTemplateEntry
 {
-    GroupTemplateEntry(uint32 gId, std::string const& gName, FormationEntrySPtr& fEntry) :
+    CreraturesGroupTemplateEntry(uint32 gId, std::string const& gName, FormationEntrySPtr fEntry) :
         groupName(gName), formationEntry(fEntry), id(gId) {}
-    GroupTemplateEntry() : formationEntry(nullptr), id(0) {}
+   //GroupTemplateEntry() : formationEntry(nullptr), id(0) {}
 
     std::string groupName;
     uint32 id;
     FormationEntrySPtr formationEntry;
 };
 
-struct GroupsTableEntry
+struct CreaturesGroupEntry
 {
-    GroupsTableEntry(uint32 _guid, GroupTemplateEntrySPtr& _groupTemplateEntry) :
+    CreaturesGroupEntry(uint32 _guid, GroupTemplateEntrySPtr& _groupTemplateEntry) :
         groupTemplateEntry(_groupTemplateEntry), guid(_guid) {}
-    GroupsTableEntry() = delete;
+    CreaturesGroupEntry() = delete;
 
     uint32 guid;
     GroupTemplateEntrySPtr groupTemplateEntry;
@@ -116,7 +122,7 @@ struct GroupsTableEntry
 struct FormationSlotInfo
 {
     FormationSlotInfo() : defaultGuid(0), slotEntry(nullptr), groupsEntry(nullptr) {}
-    FormationSlotInfo(uint32 _guid, FormationSlotEntrySPtr& _slot, GroupsTableEntrySPtr& _groups) :
+    FormationSlotInfo(uint32 _guid, FormationSlotEntrySPtr& _slot, CreaturesGroupEntrySPtr& _groups) :
         defaultGuid(_guid), slotEntry(_slot), groupsEntry(_groups) {}
 
     uint32 GetSlotId() const { return slotEntry->slotId; }
@@ -124,8 +130,9 @@ struct FormationSlotInfo
     uint32 GetGroupGuid() const { return groupsEntry->guid; }
     uint32 GetFormationId() const { return slotEntry->formationEntry->formationId; }
     uint32 GetDefaultGuid() const { return defaultGuid; }
+    FormationEntrySPtr GetFormationEntry() { return slotEntry->formationEntry; }
 
-    GroupsTableEntrySPtr GetGroupTableEntry() { return groupsEntry; }
+    CreaturesGroupEntrySPtr GetGroupTableEntry() { return groupsEntry; }
     void ChangeFormationEntry(FormationSlotEntrySPtr& fEntry) { slotEntry = fEntry; }
 
     float GetAngle() const { return slotEntry->angle; }
@@ -133,7 +140,7 @@ struct FormationSlotInfo
 
     uint32 defaultGuid;
     FormationSlotEntrySPtr slotEntry;
-    GroupsTableEntrySPtr groupsEntry;
+    CreaturesGroupEntrySPtr groupsEntry;
 };
 
 class FormationMgr
@@ -151,12 +158,15 @@ public:
 
 private:
     void LoadGroupTemplate();
-    void LoadCreaturesFormation();
+    void LoadGroupGuids();
+    void LoadGroupMembers();
+    void oldloader();
 
     FormationEntryMap m_formationEntries;
     GroupTemplateEntryMap m_groupTemplateEntries;
-    GroupsTableEntryMap m_groupsData;
+    CreaturesGroupEntryMap m_groupsData;
     FormationSlotInfoMap m_slotInfos;
+    GroupGuidMap m_groupGuids;
 };
 template<> void FormationMgr::SetFormationSlot<Creature>(Creature* creature, Map* map);
 
@@ -172,8 +182,8 @@ private:
     typedef std::map<uint32, SlotDataSPtr> SlotsMap;
 
 public:
-    FormationData(GroupsTableEntrySPtr groupTableEntry) :
-        m_groupTableEntry(groupTableEntry), m_currentFormationEntry(groupTableEntry->groupTemplateEntry->formationEntry),
+    FormationData(CreaturesGroupEntrySPtr groupTableEntry) :
+        m_groupTableEntry(groupTableEntry), m_currentFormationShape(groupTableEntry->groupTemplateEntry->formationEntry->formationType),
         m_formationEnabled(true), m_realMaster(nullptr), m_mirrorState(false),
         m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM), m_masterCheck(0),
         m_lastWP(0), m_wpPathId(0)
@@ -182,7 +192,6 @@ public:
 
     void SetFollowersMaster();
     bool SwitchFormation(uint32 fId);
-    bool SwitchFormation(FormationEntrySPtr fEntry);
     void Disband();
 
     void SetMirrorState(bool state) { m_mirrorState = state; };
@@ -202,20 +211,23 @@ public:
     SlotsMap const& GetSlots() const { return m_slotMap; }
     uint32 GetGroupGuid() const { return m_groupTableEntry->guid; }
     uint32 GetGroupEntryId() const { return m_groupTableEntry->groupTemplateEntry->id; }
-    uint32 GetOriginalFormationId() const { return m_groupTableEntry->groupTemplateEntry->formationEntry->formationId; }
-    uint32 GetFormationId() const { return m_currentFormationEntry->formationId; }
-    GroupsTableEntrySPtr GetGroupTableEntry() { return m_groupTableEntry; }
+    uint32 GetFormationId() const { return m_groupTableEntry->groupTemplateEntry->formationEntry->formationId; }
+    GroupFormationType GetFormationType() const { return m_currentFormationShape; }
+    CreaturesGroupEntrySPtr GetGroupTableEntry() { return m_groupTableEntry; }
+
+    void FixSlotsPositions();
 
 private:
     SlotDataSPtr GetFirstAliveSlot();
     SlotDataSPtr GetFirstFreeSlot(uint32 guid);
     void SetMasterMovement(Creature* master);
     void TrySetNewMaster(Creature* masterCandidat = nullptr);
-    GroupsTableEntrySPtr m_groupTableEntry;
-    FormationEntrySPtr m_currentFormationEntry;
+    CreaturesGroupEntrySPtr m_groupTableEntry;
+    GroupFormationType m_currentFormationShape;
     SlotsMap m_slotMap;
     bool m_formationEnabled;
     bool m_mirrorState;
+    bool m_needToFixPositions;
 
     uint32 m_lastWP;
     uint32 m_wpPathId;
@@ -236,16 +248,16 @@ public:
 
     ~SlotData();
 
-    uint32 GetFormationId() const { return m_slot->GetFormationId(); }
-    GroupsTableEntrySPtr GetGroupTableEntry() { return m_formationData->GetGroupTableEntry(); }
-    uint32 GetSlotId() const { return m_slot->GetSlotId(); }
-    float GetDistance() const { return m_slot->GetDistance(); }
+    uint32 GetFormationId() const { return m_formationId; }
+    CreaturesGroupEntrySPtr GetGroupTableEntry() { return m_formationData->GetGroupTableEntry(); }
+    uint32 GetSlotId() const { return m_formationId; }
+    float GetDistance() const { return m_distance; }
     float GetAngle() const;
     bool IsMasterSlot() const { return GetSlotId() == 0; }
     FormationData* GetFormationData() const { return m_formationData; }
     // can be null!
     Creature* GetCreature() const { return m_creature; }
-    uint32 GetDefaultGuid() const { return m_slot->GetDefaultGuid(); }
+    uint32 GetDefaultGuid() const { return m_defaultGuid; }
     Creature* GetMaster() { return m_formationData->GetMaster(); }
 
     void SetNewPositionRequired() { m_recomputePosition = true; }
@@ -254,10 +266,14 @@ public:
 private:
     void SetCreature(Creature* creature);
 
-    FormationSlotInfoSPtr m_slot;
     Creature* m_creature;
     FormationData* m_formationData;
     bool m_recomputePosition;
+
+    float m_angle;
+    float m_distance;
+    uint32 m_formationId;
+    uint32 m_defaultGuid;
 };
 
 

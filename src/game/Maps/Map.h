@@ -334,7 +334,7 @@ class Map : public GridRefManager<NGridType>
         void RemoveTransport(Transport* transport);
 
         // formation data
-        FormationData* GetFormationData(GroupsTableEntrySPtr& grpEntry);
+        FormationData* GetFormationData(CreaturesGroupEntrySPtr& grpEntry);
 
     private:
         void LoadMapAndVMap(int gx, int gy);

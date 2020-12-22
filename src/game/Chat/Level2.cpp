@@ -2389,14 +2389,7 @@ bool ChatHandler::HandleNpcFormationSwitchCommand(char* args)
         return false;
     }
 
-    auto fEntry = sFormationMgr.GetFormationEntry(formationId);
-    if (!fEntry)
-    {
-        PSendSysMessage("Provided formation id is not found!");
-        return false;
-    }
-
-    if (!currSlot->GetFormationData()->SwitchFormation(fEntry))
+    if (!currSlot->GetFormationData()->SwitchFormation(formationId))
         PSendSysMessage("Failed to switch formation template!");
     return true;
 }
