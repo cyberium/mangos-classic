@@ -818,7 +818,7 @@ void FormationData::SetNewSlot(Creature* creature, SlotDataSPtr& slot)
 
 void FormationData::FixSlotsPositions()
 {
-    uint32 defaultDist =  m_groupTableEntry->groupTemplateEntry->formationEntry->slots[0]->distance;
+    float defaultDist =  m_groupTableEntry->groupTemplateEntry->formationEntry->distance;
     switch (GetFormationType())
     {
         // random formation
@@ -928,6 +928,7 @@ void FormationData::FixSlotsPositions()
             break;
     }
 
+    // force a replacement even if the master is not moving
     auto slotItr = m_slotMap.begin()++;
     while (slotItr != m_slotMap.end())
     {
