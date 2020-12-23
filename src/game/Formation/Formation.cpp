@@ -48,7 +48,7 @@ void FormationMgr::LoadGroupTemplate()
             uint32 groupId = fields[0].GetUInt32();
             std::string gName = fields[1].GetString();
 
-            m_groupTemplateEntries.emplace(groupId, new CreraturesGroupTemplateEntry(groupId, gName, nullptr));
+            m_groupTemplateEntries.emplace(groupId, new CreraturesGroupTemplateEntry(groupId, gName));
             count++;
         } while (groupTemplateQR->NextRow());
     }
@@ -206,9 +206,16 @@ void FormationMgr::LoadGroupMembers()
                 }
                 auto& groupEntry = groupTemplateItr->second;
 
-                if (groupEntry->formationEntry)
+                CreaturesGroupEntrySPtr gEntry = nullptr;
+                auto groupEntryItr = m_groupsData.find(groupGuid);
+                if (groupEntryItr == m_groupsData.end())
                 {
-                    sLog.outErrorDb("Group entry(%u) already have formation, skipping...", groupGuidItr->first);
+                    gEntry = CreaturesGroupEntrySPtr(new CreaturesGroupEntry(groupGuid, groupEntry));
+                    m_groupsData.emplace(groupGuid, gEntry);
+                }
+                else
+                {
+                    sLog.outErrorDb("GroupGuid(%u) have duplicate entry in group_formation, skipping...", groupGuid);
                     continue;
                 }
 
@@ -225,17 +232,7 @@ void FormationMgr::LoadGroupMembers()
                 fEntry->formationType = GroupFormationType(formationType);
                 fEntry->options = options;
                 fEntry->distance = distance;
-                groupEntry->formationEntry = fEntry;
-
-                CreaturesGroupEntrySPtr gEntry = nullptr;
-                auto groupEntryItr = m_groupsData.find(groupGuid);
-                if (groupEntryItr == m_groupsData.end())
-                {
-                    gEntry = CreaturesGroupEntrySPtr(new CreaturesGroupEntry(groupGuid, groupEntry));
-                    m_groupsData.emplace(groupGuid, gEntry);
-                }
-                else
-                    gEntry = groupEntryItr->second;
+                gEntry->formationEntry = fEntry;
 
                 // slot check and creations
                 FormationSlotInfoMap tempSlotInfoMap;
@@ -270,191 +267,6 @@ void FormationMgr::LoadGroupMembers()
     }
 
     sLog.outString(">> Loaded %u group_formation data", count);
-    sLog.outString();
-}
-
-
-void FormationMgr::oldloader()
-{
-    sLog.outString("Loading group_member...");
-
-    // fields indexes                          0            1        2
-    const char* sqlGMRequest = "SELECT group_guid, member_guid, slot_id from group_member";
-
-    uint32 count = 0;
-    std::unique_ptr<QueryResult> groupMemberQR(WorldDatabase.Query(sqlGMRequest));
-
-    std::multimap<uint32, std::tuple<uint32, uint32>> fContainer;
-    std::map<uint32, std::set<uint32>> unique_membersGuids;
-    std::set <std::pair<uint32, uint32>> uniqueSlotIdPerGroup;
-
-    if (groupMemberQR)
-    {
-        do
-        {
-            Field* fields = groupMemberQR->Fetch();
-
-            uint32 groupGuid = fields[0].GetUInt32();
-            uint32 memberGuid = fields[1].GetUInt32();
-            uint32 slotId = fields[2].GetUInt32();
-
-            auto sData = std::make_pair(groupGuid, slotId);
-
-
-            auto poolId = sPoolMgr.IsPartOfAPool<Creature>(memberGuid);
-            if (poolId)
-            {
-                sLog.outErrorDb("Creature guid(%u) have valid PoolId(%u) that will not work with formation. Disabling pool...", memberGuid, poolId);
-                sPoolMgr.RemoveAutoSpawnForPool(poolId);
-                sPoolMgr.DespawnPoolInMaps(poolId);
-                sPoolMgr.RemoveFromPool<Creature>(memberGuid);
-                CreatureData const* cData = sObjectMgr.GetCreatureData(memberGuid);
-                sObjectMgr.AddCreatureToGrid(memberGuid, cData);
-            }
-
-            auto cData = sObjectMgr.GetCreatureData(memberGuid);
-            if (cData)
-            {
-                auto linkInfo = sCreatureLinkingMgr.GetLinkedTriggerInformation(cData->id, 0, cData->mapid);
-                if (linkInfo)
-                {
-                    sLog.outErrorDb("Creature guid(%u) have its entry(%u) in linked creature table that will not work with formation. Disabling Linking...", memberGuid, cData->id);
-                    sCreatureLinkingMgr.DeleteEntry(cData->id, cData->mapid);
-                }
-            }
-
-            auto linkInfo = sCreatureLinkingMgr.GetLinkedTriggerInformation(0, memberGuid, 0);
-            if (linkInfo)
-            {
-                sLog.outErrorDb("Creature guid(%u) is in linked creature table, that will not work with formation. Disabling Linking...", memberGuid);
-                sCreatureLinkingMgr.DeleteGuid(memberGuid);
-            }
-
-            auto itr = uniqueSlotIdPerGroup.find(sData);
-            if (itr == uniqueSlotIdPerGroup.end())
-            {
-                fContainer.emplace(groupGuid, std::make_tuple(memberGuid, slotId));
-                uniqueSlotIdPerGroup.emplace(sData);
-            }
-            else
-                sLog.outErrorDb("group_member slot(%u) is already assigned skipping...", slotId);
-
-            ++count;
-        } while (groupMemberQR->NextRow());
-    }
-
-    sLog.outString(">> Loaded %u group members", count);
-    sLog.outString();
-
-
-    sLog.outString("Loading groups...");
-
-    // fields indexes                         0            1
-    const char* sqlGrpRequest = "SELECT group_guid, group_entry from group_guid";
-
-    count = 0;
-    std::unique_ptr<QueryResult> groupQR(WorldDatabase.Query(sqlGrpRequest));
-
-    if (groupQR)
-    {
-        do
-        {
-            Field* fields = groupQR->Fetch();
-
-            uint32 groupGuid = fields[0].GetUInt32();
-            uint32 groupEntryId = fields[1].GetUInt32();
-
-            auto& groupTemplateEntryItr = m_groupTemplateEntries.find(groupEntryId);
-            if (groupTemplateEntryItr == m_groupTemplateEntries.end())
-            {
-                sLog.outErrorDb("Template(%u) referenced in table groups(%u) is not found in group_template table", groupEntryId, groupGuid);
-                continue;
-            }
-
-            auto& groupTemplateEntry = groupTemplateEntryItr->second;
-            if (groupTemplateEntry->formationEntry == nullptr)
-            {
-                sLog.outErrorDb("group_template(%u) referenced in table groups(%u) have no formation data in group_formation_template table", groupEntryId, groupGuid);
-                continue;
-            }
-
-            auto masterSlotItr = groupTemplateEntry->formationEntry->slots.find(0);
-            if (masterSlotItr == groupTemplateEntry->formationEntry->slots.end())
-            {
-                sLog.outErrorDb("formation(%u) referenced in table groups_template(%u) have no master in group_formation_template table",
-                    groupTemplateEntry->formationEntry->formationId, groupGuid);
-                continue;
-            }
-
-            auto bounds = fContainer.equal_range(groupGuid);
-            if (std::distance(bounds.first, bounds.second) == 0)
-            {
-                sLog.outErrorDb("group_template(%u) referenced in table groups(%u) have no data in group_member table", groupEntryId, groupGuid);
-                continue;
-            }
-
-            CreaturesGroupEntrySPtr gEntry = nullptr;
-            auto groupEntryItr = m_groupsData.find(groupGuid);
-            if (groupEntryItr == m_groupsData.end())
-            {
-                gEntry = CreaturesGroupEntrySPtr(new CreaturesGroupEntry(groupGuid, groupTemplateEntry));
-                m_groupsData.emplace(groupGuid, gEntry);
-            }
-            else
-                gEntry = groupEntryItr->second;
-
-            FormationSlotInfoMap tempSlotInfoMap;
-            bool foundMasterSlot = false;
-            uint32 dist = 0;
-            for (auto itr = bounds.first; itr != bounds.second; ++itr)
-            {
-                auto& memberGuid = std::get<0>(itr->second);
-                auto& slotId = std::get<1>(itr->second);
-                auto slotEntryItr = groupTemplateEntry->formationEntry->slots.find(slotId);
-
-                if (slotId == 0)
-                {
-                    foundMasterSlot = true;
-                    dist = slotEntryItr->second->distance;
-                }
-
-                if (slotEntryItr != groupTemplateEntry->formationEntry->slots.end())
-                {
-                    if (slotId == 0)
-                    {
-                        foundMasterSlot = true;
-                        dist = slotEntryItr->second->distance;
-                    }
-
-                    tempSlotInfoMap.emplace(memberGuid, new FormationSlotInfo(memberGuid, slotEntryItr->second, gEntry));
-                }
-                else
-                {
-                    if (groupTemplateEntry->formationEntry->formationId >= 10 && groupTemplateEntry->formationEntry->formationId < 17)
-                    {
-                        // we should create and empty slot with only distance set
-                        groupTemplateEntry->formationEntry->slots.emplace(slotId, new FormationSlotEntry(slotId, 0, dist, groupTemplateEntry->formationEntry));
-                        slotEntryItr = groupTemplateEntry->formationEntry->slots.find(slotId);
-                        tempSlotInfoMap.emplace(memberGuid, new FormationSlotInfo(memberGuid, slotEntryItr->second, gEntry));
-                    }
-                    else
-                        sLog.outErrorDb("Error in table group_member. Slot(%u) is not defined in group_formation_template for guid(%u)", slotId, memberGuid);
-                }
-            }
-
-            if (foundMasterSlot)
-            {
-                for (auto itr : tempSlotInfoMap)
-                    m_slotInfos.emplace(itr);
-            }
-            else
-                sLog.outErrorDb("Error in table group_member. MasterSlot(0) is not defined for group guid(%u) skipping...", groupGuid);
-
-            ++count;
-        } while (groupQR->NextRow());
-    }
-
-    sLog.outString(">> Loaded %u groups definitions", count);
     sLog.outString();
 }
 
@@ -818,7 +630,7 @@ void FormationData::SetNewSlot(Creature* creature, SlotDataSPtr& slot)
 
 void FormationData::FixSlotsPositions()
 {
-    float defaultDist =  m_groupTableEntry->groupTemplateEntry->formationEntry->distance;
+    float defaultDist =  m_groupTableEntry->formationEntry->distance;
     switch (GetFormationType())
     {
         // random formation

@@ -100,23 +100,23 @@ struct FormationEntry
 
 struct CreraturesGroupTemplateEntry
 {
-    CreraturesGroupTemplateEntry(uint32 gId, std::string const& gName, FormationEntrySPtr fEntry) :
-        groupName(gName), formationEntry(fEntry), id(gId) {}
+    CreraturesGroupTemplateEntry(uint32 gId, std::string const& gName) :
+        groupName(gName), id(gId) {}
    //GroupTemplateEntry() : formationEntry(nullptr), id(0) {}
 
     std::string groupName;
     uint32 id;
-    FormationEntrySPtr formationEntry;
 };
 
 struct CreaturesGroupEntry
 {
-    CreaturesGroupEntry(uint32 _guid, GroupTemplateEntrySPtr& _groupTemplateEntry) :
-        groupTemplateEntry(_groupTemplateEntry), guid(_guid) {}
+    CreaturesGroupEntry(uint32 _guid, GroupTemplateEntrySPtr& _groupTemplateEntry, FormationEntrySPtr fEntry = nullptr) :
+        groupTemplateEntry(_groupTemplateEntry), guid(_guid), formationEntry(fEntry) {}
     CreaturesGroupEntry() = delete;
 
     uint32 guid;
     GroupTemplateEntrySPtr groupTemplateEntry;
+    FormationEntrySPtr formationEntry;
 };
 
 struct FormationSlotInfo
@@ -160,7 +160,6 @@ private:
     void LoadGroupTemplate();
     void LoadGroupGuids();
     void LoadGroupMembers();
-    void oldloader();
 
     FormationEntryMap m_formationEntries;
     GroupTemplateEntryMap m_groupTemplateEntries;
@@ -183,7 +182,7 @@ private:
 
 public:
     FormationData(CreaturesGroupEntrySPtr groupTableEntry) :
-        m_groupTableEntry(groupTableEntry), m_currentFormationShape(groupTableEntry->groupTemplateEntry->formationEntry->formationType),
+        m_groupTableEntry(groupTableEntry), m_currentFormationShape(groupTableEntry->formationEntry->formationType),
         m_formationEnabled(true), m_realMaster(nullptr), m_mirrorState(false),
         m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM), m_masterCheck(0),
         m_lastWP(0), m_wpPathId(0)
@@ -211,7 +210,7 @@ public:
     SlotsMap const& GetSlots() const { return m_slotMap; }
     uint32 GetGroupGuid() const { return m_groupTableEntry->guid; }
     uint32 GetGroupEntryId() const { return m_groupTableEntry->groupTemplateEntry->id; }
-    uint32 GetFormationId() const { return m_groupTableEntry->groupTemplateEntry->formationEntry->formationId; }
+    uint32 GetFormationId() const { return m_groupTableEntry->formationEntry->formationId; }
     GroupFormationType GetFormationType() const { return m_currentFormationShape; }
     CreaturesGroupEntrySPtr GetGroupTableEntry() { return m_groupTableEntry; }
 
