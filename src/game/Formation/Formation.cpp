@@ -237,7 +237,7 @@ void FormationData::FillSlot(CreatureGroupSlotEntrySPtr& slot, Creature* creatur
         sData->SetCreature(creature);
     }
 
-    creature->SetFormationEntry(sData);
+    creature->SetFormationSlot(sData);
     creature->SetActiveObjectState(true);
 
     sLog.outString("Slot(%u) filled by %s in formation(%u)", slot->slotId, creature->GetGuidStr().c_str(), slot->creatureGroupEntry->formationEntry->formationId);
@@ -455,13 +455,13 @@ void FormationData::SetNewSlot(Creature* creature, SlotDataSPtr& slot)
     auto oldSlot = creature->GetFormationSlot();
 
     slot->SetCreature(creature);
-    creature->SetFormationEntry(slot);
+    creature->SetFormationSlot(slot);
 
     if (oldSlot)
         oldSlot->SetCreature(creatureInNewSlot);
 
     if (creatureInNewSlot)
-        creatureInNewSlot->SetFormationEntry(oldSlot);
+        creatureInNewSlot->SetFormationSlot(oldSlot);
 }
 
 void FormationData::FixSlotsPositions()

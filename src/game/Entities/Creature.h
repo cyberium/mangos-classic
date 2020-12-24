@@ -898,7 +898,7 @@ class Creature : public Unit
         void ResetSpellHitCounter();
 
         // formation related methods
-        void SetFormationEntry(SlotDataSPtr& sData) { m_formationSlot = sData; }
+        void SetFormationSlot(SlotDataSPtr& sData) { m_formationSlot = sData; }
         SlotDataSPtr GetFormationSlot() override { return m_formationSlot; }
         virtual bool IsFormationMaster() const override { return m_formationSlot ? m_formationSlot->GetSlotId() == 0 : false; }
         virtual void RemoveFromFormation() override { m_formationSlot = nullptr; }
