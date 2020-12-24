@@ -44,6 +44,8 @@ const char* ChaseModes[] =
 template<class T, typename D>
 bool TargetedMovementGeneratorMedium<T, D>::Update(T& owner, const uint32& time_diff)
 {
+    uint32 lowGuid = owner.GetGUIDLow();
+
     if (!i_target.isValid() || !i_target->IsInWorld())
         return !static_cast<D*>(this)->RemoveOnInvalid();
 
@@ -1176,11 +1178,13 @@ float FormationMovementGenerator::BuildPath(Unit& owner, PointsArray& path, int3
 
     auto const& masterSpline = i_target->movespline;
 
+    uint32 lowGuid = owner.GetGUIDLow();
+
     float slotAngle = owner.GetFormationSlot()->GetAngle();
     float slotDist = owner.GetFormationSlot()->GetDistance();
     float angle = i_target->GetOrientation();
     bool isOnGround = !owner.IsFlying() && !owner.IsSwimming() && !owner.isHover();
-    
+
     if (masterSpline->Finalized())
     {
         Vector3 masterPos(i_target->GetPositionX(), i_target->GetPositionY(), i_target->GetPositionZ());
@@ -1282,6 +1286,8 @@ void FormationMovementGenerator::HandleTargetedMovement(Unit& owner, const uint3
     bool targetRelocation = false;
     bool targetOrientation = false;
     bool needToRePos = false;
+
+    uint32 lowGuid = owner.GetGUIDLow();
 
     if (m_targetMoving && (!targetMovingLast || owner.movespline->Finalized()))  // Movement just started or master is moving and not owner: force update
         targetRelocation = true;

@@ -66,6 +66,7 @@
 #include "Cinematics/CinematicMgr.h"
 #include "World/WorldState.h"
 #include "Formation/Formation.h"
+#include "CreatureGroup/CreatureGroup.h"
 
 #ifdef BUILD_AHBOT
 #include "AuctionHouseBot/AuctionHouseBot.h"
@@ -1125,6 +1126,9 @@ void World::SetInitialWorldSettings()
 
     sLog.outString("Loading Npc Text Id...");
     sObjectMgr.LoadNpcGossips();                            // must be after load Creature and LoadGossipText
+
+    // Loading Creatures groups
+    sCreatureGroupMgr.Initialize();
 
     // Loading Formation Templates
     sFormationMgr.Initialize();
