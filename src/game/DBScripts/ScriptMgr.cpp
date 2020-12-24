@@ -2474,7 +2474,7 @@ bool ScriptAction::HandleScriptStep()
 
                 case 2:                                     // disband formation
                 {
-                    formationData->Disband();
+                    formationData->ClearMoveGen();
                     break;
                 }
 

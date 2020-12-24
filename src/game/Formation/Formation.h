@@ -73,6 +73,7 @@ public:
     void SetFollowersMaster();
     bool SwitchFormation(uint32 fId);
     void Disband();
+    void ClearMoveGen();
 
     void SetMirrorState(bool state) { m_mirrorState = state; };
     bool GetMirrorState() const { return m_mirrorState; }

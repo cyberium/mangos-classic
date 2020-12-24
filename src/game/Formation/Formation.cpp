@@ -184,7 +184,26 @@ bool FormationData::SwitchFormation(uint32 fId)
     return true;
 }
 
+
+// remove all creatures from formation data
 void FormationData::Disband()
+{
+    ClearMoveGen();
+    for (auto& slotItr : m_slotMap)
+    {
+        auto& slot = slotItr.second;
+
+        Creature* slotCreature = slot->GetCreature();
+        if (slotCreature && slotCreature->IsAlive())
+        {
+            slotCreature->RemoveFromFormation();
+        }
+    }
+    m_slotMap.clear();
+}
+
+// remove all movegen (maybe we should remove only move in formation one)
+void FormationData::ClearMoveGen()
 {
     for (auto& slotItr : m_slotMap)
     {
