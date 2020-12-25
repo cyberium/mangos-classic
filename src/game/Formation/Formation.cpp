@@ -385,32 +385,12 @@ void FormationData::Reset()
     if (!m_realMaster || !m_realMaster->IsInWorld())
         return;
 
-    //SwitchFormation(m_groupTableEntry->groupTemplateEntry->formationEntry);
     m_mirrorState = false;
 
-    for (auto& slotItr : m_slotMap)
-    {
-        auto& slot = slotItr.second;
+    SwitchFormation(m_groupTableEntry->formationEntry->formationType);
 
-        Creature* slotCreature = slot->GetCreature();
-
-        if (!slotCreature)
-        {
-            auto cData = sObjectMgr.GetCreatureData(slot->GetDefaultGuid());
-            if (!cData)
-                continue;
-
-            auto foundCreature = m_realMaster->GetMap()->GetCreature(cData->GetObjectGuid(slot->GetDefaultGuid()));
-            if (foundCreature)
-            {
-                slot->SetCreature(foundCreature);
-
-                if (slot->GetSlotId() == 0)
-                    SetMasterMovement(foundCreature);
-            }
-        }
-    }
-    SetFollowersMaster();
+    // just be sure to fix all position
+    m_needToFixPositions = true;
 }
 
 void FormationData::OnRespawn(Creature* creature)
@@ -503,9 +483,28 @@ void FormationData::Add(Creature* creature)
 
 }
 
-void FormationData::FixSlotsPositions()
+void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
 {
     float defaultDist =  m_groupTableEntry->formationEntry->distance;
+    float totalMembers = float(m_slotMap.size() - 1);
+    if (onlyAlive)
+    {
+        totalMembers = 0;
+        for (auto& slotItr : m_slotMap)
+        {
+            auto& slot = slotItr.second;
+            if (!slot->GetCreature() || !slot->GetCreature()->IsAlive())
+                continue;
+
+            if (slot->IsMasterSlot())
+                continue;
+            ++totalMembers;
+        }
+    }
+
+    if (!totalMembers)
+        return;
+
     switch (GetFormationType())
     {
         // random formation
@@ -517,14 +516,20 @@ void FormationData::FixSlotsPositions()
         // single file formation
         case GROUP_FORMATION_TYPE_SINGLE_FILE:
         {
+            uint32 membCount = 1;
             for (auto& slotItr : m_slotMap)
             {
                 auto& slot = slotItr.second;
-                if (slot->GetSlotId() == 0)
+                if (slot->IsMasterSlot())
+                {
+                    slot->m_angle = 0;
+                    slot->m_distance = 0;
                     continue;
+                }
 
                 slot->m_angle = M_PI_F;
-                slot->m_distance = defaultDist * slot->GetSlotId();
+                slot->m_distance = defaultDist * membCount;
+                ++membCount;
             }
             break;
         }
@@ -532,17 +537,23 @@ void FormationData::FixSlotsPositions()
         // side by side formation
         case GROUP_FORMATION_TYPE_SIDE_BY_SIDE:
         {
+            uint32 membCount = 1;
             for (auto& slotItr : m_slotMap)
             {
                 auto& slot = slotItr.second;
-                if (slot->GetSlotId() == 0)
+                if (slot->IsMasterSlot())
+                {
+                    slot->m_angle = 0;
+                    slot->m_distance = 0;
                     continue;
+                }
 
-                if ((slot->GetSlotId() & 1) == 0)
+                if ((membCount & 1) == 0)
                     slot->m_angle = (M_PI_F / 2.0f) + M_PI_F;
                 else
                     slot->m_angle = M_PI_F / 2.0f;
-                slot->m_distance = defaultDist * (((slot->GetSlotId() - 1) / 2) + 1);
+                slot->m_distance = defaultDist * (((membCount-1) / 2) + 1);
+                ++membCount;
             }
             break;
         }
@@ -550,17 +561,23 @@ void FormationData::FixSlotsPositions()
         // like a geese formation
         case GROUP_FORMATION_TYPE_LIKE_GEESE:
         {
+            uint32 membCount = 1;
             for (auto& slotItr : m_slotMap)
             {
                 auto& slot = slotItr.second;
-                if (slot->GetSlotId() == 0)
+                if (slot->IsMasterSlot())
+                {
+                    slot->m_angle = 0;
+                    slot->m_distance = 0;
                     continue;
+                }
 
-                if ((slot->GetSlotId() & 1) == 0)
+                if ((membCount & 1) == 0)
                     slot->m_angle = M_PI_F + (M_PI_F / 4.0f);
                 else
                     slot->m_angle = M_PI_F - (M_PI_F / 3.0f);
-                slot->m_distance = defaultDist * (((slot->GetSlotId() - 1) / 2) + 1);
+                slot->m_distance = defaultDist * (((membCount - 1) / 2) + 1);
+                ++membCount;
             }
             break;
         }
@@ -568,14 +585,20 @@ void FormationData::FixSlotsPositions()
         // fanned behind formation
         case GROUP_FORMATION_TYPE_FANNED_OUT_BEHIND:
         {
+            uint32 membCount = 1;
             for (auto& slotItr : m_slotMap)
             {
                 auto& slot = slotItr.second;
-                if (slot->GetSlotId() == 0)
+                if (slot->IsMasterSlot())
+                {
+                    slot->m_angle = 0;
+                    slot->m_distance = 0;
                     continue;
+                }
 
-                slot->m_angle = (M_PI_F / 2.0f) + (M_PI_F / float(m_slotMap.size() - 1)) * (slot->GetSlotId() - 1);
+                slot->m_angle = (M_PI_F / 2.0f) + (M_PI_F / totalMembers) * (membCount - 1);
                 slot->m_distance = defaultDist;
+                ++membCount;
             }
             break;
         }
@@ -583,16 +606,22 @@ void FormationData::FixSlotsPositions()
         // fanned in front formation
         case GROUP_FORMATION_TYPE_FANNED_OUT_IN_FRONT:
         {
+            uint32 membCount = 1;
             for (auto& slotItr : m_slotMap)
             {
                 auto& slot = slotItr.second;
-                if (slot->GetSlotId() == 0)
+                if (slot->IsMasterSlot())
+                {
+                    slot->m_angle = 0;
+                    slot->m_distance = 0;
                     continue;
+                }
 
-                slot->m_angle = M_PI_F + (M_PI_F / 2.0f) + (M_PI_F / float(m_slotMap.size() - 1)) * (slot->GetSlotId() - 1);
+                slot->m_angle = M_PI_F + (M_PI_F / 2.0f) + (M_PI_F / totalMembers) * (membCount - 1);
                 if (slot->m_angle > M_PI_F * 2.0f)
                     slot->m_angle = slot->m_angle - M_PI_F * 2.0f;
                 slot->m_distance = defaultDist;
+                ++membCount;
             }
             break;
         }
@@ -600,14 +629,20 @@ void FormationData::FixSlotsPositions()
         // circle formation
         case GROUP_FORMATION_TYPE_CIRCLE_THE_LEADER:
         {
+            uint32 membCount = 1;
             for (auto& slotItr : m_slotMap)
             {
                 auto& slot = slotItr.second;
-                if (slot->GetSlotId() == 0)
+                if (slot->IsMasterSlot())
+                {
+                    slot->m_angle = 0;
+                    slot->m_distance = 0;
                     continue;
+                }
 
-                slot->m_angle = ((M_PI_F * 2.0f) / float(m_slotMap.size() - 1)) * (slot->GetSlotId() - 1);
+                slot->m_angle = ((M_PI_F * 2.0f) / totalMembers) * (membCount - 1);
                 slot->m_distance = defaultDist;
+                ++membCount;
             }
             break;
         }

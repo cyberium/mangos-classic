@@ -91,7 +91,7 @@ public:
     void Replace(Creature* creature, SlotDataSPtr slot = nullptr);
     void Compact();
     void Add(Creature* creature);
-    void FixSlotsPositions();
+    void FixSlotsPositions(bool onlyAlive = false);
 
     SlotsMap const& GetSlots() const { return m_slotMap; }
     uint32 GetGroupGuid() const { return m_groupTableEntry->guid; }
