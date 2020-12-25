@@ -75,7 +75,7 @@ struct CreraturesGroupTemplateEntry
 struct CreaturesGroupEntry
 {
     CreaturesGroupEntry(uint32 _guid, GroupTemplateEntrySPtr& _groupTemplateEntry, CreatureGroupSlotMapSPtr _slot, FormationEntrySPtr fEntry = nullptr) :
-        groupTemplateEntry(_groupTemplateEntry), guid(_guid), creatureSlot(_slot), formationEntry(fEntry) {}
+        groupTemplateEntry(_groupTemplateEntry), guid(_guid), masterSlot(nullptr), creatureSlot(_slot), formationEntry(fEntry) {}
     CreaturesGroupEntry() = delete;
 
     CreatureGroupSlotEntrySPtr GetSlotByCreatureGuid(uint32 guid)
@@ -88,6 +88,7 @@ struct CreaturesGroupEntry
     }
 
     uint32 guid;
+    CreatureGroupSlotEntrySPtr masterSlot;
     CreatureGroupSlotMapSPtr creatureSlot;
     GroupTemplateEntrySPtr groupTemplateEntry;
     FormationEntrySPtr formationEntry;

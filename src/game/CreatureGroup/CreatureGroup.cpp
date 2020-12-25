@@ -212,7 +212,9 @@ void CreaturesGroupMgr::LoadGroups()
                     auto& slotId = std::get<1>(itr->second);
 
                     slotMap->emplace(memberGuid, new CreatureGroupSlotEntry(slotId, memberGuid, gEntry));
-                    auto& slotEntry = (*slotMap)[memberGuid];
+
+                    if (slotId == 0)
+                        gEntry->masterSlot = (*slotMap)[memberGuid];
 
                     m_groupsData[currentMap].emplace(memberGuid, gEntry);
                 }
