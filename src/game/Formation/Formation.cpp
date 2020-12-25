@@ -185,6 +185,11 @@ bool FormationData::SwitchFormation(uint32 fId)
 }
 
 
+bool FormationData::SetNewMaster(Creature* creature)
+{
+    return TrySetNewMaster(creature);
+}
+
 // remove all creatures from formation data
 void FormationData::Disband()
 {
@@ -331,17 +336,16 @@ void FormationData::SetMasterMovement(Creature* newMaster)
     m_masterSlot = newMasterSlot;
 }
 
-void FormationData::TrySetNewMaster(Creature* masterCandidate/* = nullptr*/)
+bool FormationData::TrySetNewMaster(Creature* masterCandidat /*= nullptr*/)
 {
-    auto& masterSlot = m_slotMap[0];
     SlotDataSPtr aliveSlot = nullptr;
 
-    if (masterCandidate)
+    if (masterCandidat)
     {
-        auto& candidateSlot = masterCandidate->GetFormationSlot();
+        auto& candidateSlot = masterCandidat->GetFormationSlot();
 
         // candidate have to be in this group
-        if (candidateSlot && candidateSlot->GetFormationId() == GetFormationId() && masterCandidate->IsAlive())
+        if (candidateSlot && candidateSlot->GetFormationId() == GetFormationId() && masterCandidat->IsAlive())
             aliveSlot = candidateSlot;
     }
     else
@@ -353,10 +357,13 @@ void FormationData::TrySetNewMaster(Creature* masterCandidate/* = nullptr*/)
     if (aliveSlot)
     {
         Creature* newMaster = aliveSlot->GetCreature();
-        Replace(newMaster, masterSlot);
+        Replace(newMaster, m_masterSlot);
         SetMasterMovement(newMaster);
         SetFollowersMaster();
+        return true;
     }
+
+    return false;
 }
 
 void FormationData::Update(uint32 diff)

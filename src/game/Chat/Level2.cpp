@@ -2394,6 +2394,30 @@ bool ChatHandler::HandleNpcFormationSwitchCommand(char* args)
     return true;
 }
 
+// change creature formation template
+bool ChatHandler::HandleNpcFormationSetMasterCommand(char* args)
+{
+    Creature* creature = getSelectedCreature();
+
+    if (!creature)
+    {
+        SendSysMessage(LANG_SELECT_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    auto currSlot = creature->GetFormationSlot();
+    if (!currSlot)
+    {
+        SendSysMessage("Creature is not in formation");
+        return true;
+    }
+
+    if (!currSlot->GetFormationData()->SetNewMaster(creature))
+        PSendSysMessage("Failed to set new master!");
+    return true;
+}
+
 // TODO: NpcCommands that need to be fixed :
 
 bool ChatHandler::HandleNpcNameCommand(char* /*args*/)

@@ -72,6 +72,7 @@ public:
 
     void SetFollowersMaster();
     bool SwitchFormation(uint32 fId);
+    bool SetNewMaster(Creature* creature);
     void Disband();
     void ClearMoveGen();
 
@@ -93,6 +94,7 @@ public:
     void Add(Creature* creature);
     void FixSlotsPositions(bool onlyAlive = false);
 
+
     SlotsMap const& GetSlots() const { return m_slotMap; }
     uint32 GetGroupGuid() const { return m_groupTableEntry->guid; }
     uint32 GetGroupEntryId() const { return m_groupTableEntry->groupTemplateEntry->id; }
@@ -104,7 +106,7 @@ private:
     SlotDataSPtr GetFirstAliveSlot();
     SlotDataSPtr GetFirstFreeSlot(uint32 guid);
     void SetMasterMovement(Creature* master);
-    void TrySetNewMaster(Creature* masterCandidat = nullptr);
+    bool TrySetNewMaster(Creature* masterCandidat = nullptr);
     CreaturesGroupEntrySPtr m_groupTableEntry;
     GroupFormationType m_currentFormationShape;
     SlotDataSPtr m_masterSlot;
