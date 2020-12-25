@@ -64,9 +64,9 @@ private:
 public:
     FormationData(CreaturesGroupEntrySPtr groupTableEntry) :
         m_groupTableEntry(groupTableEntry), m_currentFormationShape(groupTableEntry->formationEntry->formationType),
-        m_formationEnabled(true), m_realMaster(nullptr), m_mirrorState(false),
+        m_masterSlot(nullptr), m_formationEnabled(true), m_realMaster(nullptr), m_mirrorState(false),
         m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM), m_masterCheck(0),
-        m_lastWP(0), m_wpPathId(0)
+        m_lastWP(0), m_wpPathId(0), m_realMasterGuid(groupTableEntry->masterSlot->defaultCreatureGuid)
     {}
     FormationData() = delete;
 
@@ -79,6 +79,7 @@ public:
     bool GetMirrorState() const { return m_mirrorState; }
     void FillSlot(CreatureGroupSlotEntrySPtr& slot, Creature* creature);
     Creature* GetMaster();
+    SlotDataSPtr GetMasterSlot() { return m_masterSlot; };
     void Update(uint32 diff);
     void Reset();
 
@@ -87,7 +88,10 @@ public:
     void OnDeath(Creature* creature);
     void OnCreatureDelete(Creature* creature);
 
-    void SetNewSlot(Creature* creature, SlotDataSPtr& slot);
+    void Replace(Creature* creature, SlotDataSPtr slot = nullptr);
+    void Compact();
+    void Add(Creature* creature);
+    void FixSlotsPositions();
 
     SlotsMap const& GetSlots() const { return m_slotMap; }
     uint32 GetGroupGuid() const { return m_groupTableEntry->guid; }
@@ -96,8 +100,6 @@ public:
     GroupFormationType GetFormationType() const { return m_currentFormationShape; }
     CreaturesGroupEntrySPtr GetGroupTableEntry() { return m_groupTableEntry; }
 
-    void FixSlotsPositions();
-
 private:
     SlotDataSPtr GetFirstAliveSlot();
     SlotDataSPtr GetFirstFreeSlot(uint32 guid);
@@ -105,6 +107,7 @@ private:
     void TrySetNewMaster(Creature* masterCandidat = nullptr);
     CreaturesGroupEntrySPtr m_groupTableEntry;
     GroupFormationType m_currentFormationShape;
+    SlotDataSPtr m_masterSlot;
     SlotsMap m_slotMap;
     bool m_formationEnabled;
     bool m_mirrorState;
@@ -112,6 +115,7 @@ private:
 
     uint32 m_lastWP;
     uint32 m_wpPathId;
+    uint32 m_realMasterGuid;
 
     Creature* m_realMaster;
 
@@ -134,12 +138,12 @@ public:
     uint32 GetSlotId() const { return m_slotId; }
     float GetDistance() const { return m_distance; }
     float GetAngle() const;
-    bool IsMasterSlot() const { return GetSlotId() == 0; }
     FormationData* GetFormationData() const { return m_formationData; }
     // can be null!
     Creature* GetCreature() const { return m_creature; }
     uint32 GetDefaultGuid() const { return m_defaultGuid; }
     Creature* GetMaster() { return m_formationData->GetMaster(); }
+    bool IsMasterSlot() const;
 
     void SetNewPositionRequired() { m_recomputePosition = true; }
     bool NewPositionRequired();

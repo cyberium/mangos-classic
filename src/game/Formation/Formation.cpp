@@ -142,7 +142,7 @@ void FormationData::SetFollowersMaster()
     for (auto slotItr : m_slotMap)
     {
         auto& currentSlot = slotItr.second;
-        if (currentSlot->GetSlotId() == 0)
+        if (currentSlot == m_masterSlot)
             continue;
 
         auto follower = currentSlot->GetCreature();
@@ -248,6 +248,7 @@ void FormationData::FillSlot(CreatureGroupSlotEntrySPtr& slot, Creature* creatur
     {
         m_formationEnabled = true;
         m_realMaster = creature;
+        m_masterSlot = sData;
 
         switch (creature->GetDefaultMovementType())
         {
@@ -270,7 +271,9 @@ void FormationData::FillSlot(CreatureGroupSlotEntrySPtr& slot, Creature* creatur
 
 Creature* FormationData::GetMaster()
 {
-    return m_slotMap[0]->GetCreature();
+    if (m_masterSlot)
+        return m_masterSlot->GetCreature();
+    return nullptr;
 }
 
 SlotDataSPtr FormationData::GetFirstAliveSlot()
@@ -299,22 +302,33 @@ SlotDataSPtr FormationData::GetFirstFreeSlot(uint32 guid)
     return nullptr;
 }
 
-void FormationData::SetMasterMovement(Creature* master)
+void FormationData::SetMasterMovement(Creature* newMaster)
 {
-    auto& masterSlot = m_slotMap[0];
-    master->GetMotionMaster()->Clear(true, true);
+    auto& newMasterSlot = newMaster->GetFormationSlot();
+    newMaster->GetMotionMaster()->Clear(true, true);
     if (m_masterMotionType == MasterMotionType::FORMATION_TYPE_MASTER_WAYPOINT)
     {
-        master->GetMotionMaster()->MoveWaypoint(m_wpPathId, 0, 0, 0, masterSlot->GetDefaultGuid(), m_lastWP);
+        newMaster->GetMotionMaster()->MoveWaypoint(m_wpPathId, 0, 0, 0, m_realMasterGuid, m_lastWP);
         m_wpPathId = 0;
         m_lastWP = 0;
     }
     else if (m_masterMotionType == MasterMotionType::FORMATION_TYPE_MASTER_RANDOM)
     {
         float x, y, z, radius;
-        m_realMaster->GetRespawnCoord(x, y, z, nullptr, &radius);
-        master->GetMotionMaster()->MoveRandomAroundPoint(x, y, z, radius);
+        if (m_realMaster)
+            m_realMaster->GetRespawnCoord(x, y, z, nullptr, &radius);
+        else
+        {
+            auto cData = sObjectMgr.GetCreatureData(m_realMasterGuid);
+            x = cData->posX;
+            y = cData->posY;
+            z = cData->posZ;
+            radius = cData->spawndist;
+        }
+        newMaster->GetMotionMaster()->MoveRandomAroundPoint(x, y, z, radius);
     }
+
+    m_masterSlot = newMasterSlot;
 }
 
 void FormationData::TrySetNewMaster(Creature* masterCandidate/* = nullptr*/)
@@ -339,7 +353,7 @@ void FormationData::TrySetNewMaster(Creature* masterCandidate/* = nullptr*/)
     if (aliveSlot)
     {
         Creature* newMaster = aliveSlot->GetCreature();
-        SetNewSlot(newMaster, masterSlot);
+        Replace(newMaster, masterSlot);
         SetMasterMovement(newMaster);
         SetFollowersMaster();
     }
@@ -380,7 +394,7 @@ void FormationData::Reset()
 
         Creature* slotCreature = slot->GetCreature();
 
-        if (!slotCreature || slotCreature->GetGUIDLow() != slot->GetDefaultGuid())
+        if (!slotCreature)
         {
             auto cData = sObjectMgr.GetCreatureData(slot->GetDefaultGuid());
             if (!cData)
@@ -390,7 +404,8 @@ void FormationData::Reset()
             if (foundCreature)
             {
                 slot->SetCreature(foundCreature);
-                if (slot->IsMasterSlot())
+
+                if (slot->GetSlotId() == 0)
                     SetMasterMovement(foundCreature);
             }
         }
@@ -417,7 +432,7 @@ void FormationData::OnRespawn(Creature* creature)
 
     auto oldSlot = creature->GetFormationSlot();
 
-    SetNewSlot(creature, freeSlot);
+    Replace(creature, freeSlot);
     creature->GetMotionMaster()->Clear(false, true);
     creature->GetMotionMaster()->MoveInFormation(freeSlot);
 }
@@ -428,6 +443,8 @@ void FormationData::OnDeath(Creature* creature)
     {
         m_lastWP = creature->GetMotionMaster()->getLastReachedWaypoint();
         m_wpPathId = creature->GetMotionMaster()->GetPathId();
+
+        m_masterCheck.Reset(5000);
     }
 
 //     auto slot = creature->GetFormationSlot();
@@ -441,7 +458,7 @@ void FormationData::OnCreatureDelete(Creature* creature)
     if (creature == slot->GetCreature())
     {
         sLog.outString("Deleting creature in slot(%u), formation(%u)", slot->GetSlotId(), GetFormationId());
-        if (slot->GetSlotId() == 0)
+        if (slot->IsMasterSlot())
         {
             OnMasterRemoved();
         }
@@ -449,19 +466,32 @@ void FormationData::OnCreatureDelete(Creature* creature)
     }
 }
 
-void FormationData::SetNewSlot(Creature* creature, SlotDataSPtr& slot)
+// replace to either first available slot position or provided one
+void FormationData::Replace(Creature* creature, SlotDataSPtr slot /*= nullptr*/)
 {
-    Creature* creatureInNewSlot = slot->GetCreature();
-    auto oldSlot = creature->GetFormationSlot();
+    if (!slot)
+    {
+        slot = GetFirstFreeSlot(creature->GetGUIDLow());
+        if (!slot)
+        {
+            sLog.outError("FormationData::Replace> Failed to replace %s! No available slot!", creature->GetGuidStr());
+            return;
+        }
+    }
 
-    slot->SetCreature(creature);
-    creature->SetFormationSlot(slot);
+    auto currSlot = creature->GetFormationSlot();
+    currSlot->m_angle = slot->GetAngle();
+    currSlot->m_distance = slot->GetDistance();
+}
 
-    if (oldSlot)
-        oldSlot->SetCreature(creatureInNewSlot);
+void FormationData::Compact()
+{
 
-    if (creatureInNewSlot)
-        creatureInNewSlot->SetFormationSlot(oldSlot);
+}
+
+void FormationData::Add(Creature* creature)
+{
+
 }
 
 void FormationData::FixSlotsPositions()
@@ -606,6 +636,14 @@ float SlotData::GetAngle() const
         return m_angle;
 
     return (2 * M_PI_F) - m_angle;
+}
+
+bool SlotData::IsMasterSlot() const
+{
+    auto masterSlot = m_formationData->GetMasterSlot();
+    if (masterSlot)
+        return masterSlot.get() == this;
+    return false;
 }
 
 bool SlotData::NewPositionRequired()
