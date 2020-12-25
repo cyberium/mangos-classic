@@ -432,7 +432,9 @@ void FormationData::OnRespawn(Creature* creature)
 
     auto oldSlot = creature->GetFormationSlot();
 
-    Replace(creature, freeSlot);
+    if (freeSlot != oldSlot)
+        Replace(creature, freeSlot);
+
     creature->GetMotionMaster()->Clear(false, true);
     creature->GetMotionMaster()->MoveInFormation(freeSlot);
 }
@@ -479,9 +481,16 @@ void FormationData::Replace(Creature* creature, SlotDataSPtr slot /*= nullptr*/)
         }
     }
 
+    // swap 2 slots positions
     auto currSlot = creature->GetFormationSlot();
-    currSlot->m_angle = slot->GetAngle();
-    currSlot->m_distance = slot->GetDistance();
+
+    float temp = currSlot->m_angle;
+    currSlot->m_angle = slot->m_angle;
+    slot->m_angle = temp;
+
+    temp = currSlot->m_distance;
+    currSlot->m_distance = slot->m_distance;
+    slot->m_distance = temp;
 }
 
 void FormationData::Compact()
