@@ -472,6 +472,7 @@ ChatCommand* ChatHandler::getCommandTable()
         { "reset",          SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcFormationResetCommand,   "", nullptr },
         { "switch",         SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcFormationSwitchCommand,  "", nullptr },
         { "setmaster",      SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcFormationSetMasterCommand, "", nullptr },
+        { "compact",        SEC_GAMEMASTER,     false, &ChatHandler::HandleNpcFormationCompactCommand, "", nullptr },
         { nullptr,          0,                  false, nullptr,                                        "", nullptr }
     };
 

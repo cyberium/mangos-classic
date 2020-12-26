@@ -483,7 +483,7 @@ void FormationData::Replace(Creature* creature, FormationSlotSPtr slot /*= nullp
 
 void FormationData::Compact()
 {
-
+    FixSlotsPositions(true);
 }
 
 void FormationData::Add(Creature* creature)
@@ -535,6 +535,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
                     continue;
                 }
 
+                if (onlyAlive && (!slot->GetEntity() || !slot->GetEntity()->IsAlive()))
+                    continue;
+
                 slot->m_angle = M_PI_F;
                 slot->m_distance = defaultDist * membCount;
                 ++membCount;
@@ -555,6 +558,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
                     slot->m_distance = 0;
                     continue;
                 }
+
+                if (onlyAlive && (!slot->GetEntity() || !slot->GetEntity()->IsAlive()))
+                    continue;
 
                 if ((membCount & 1) == 0)
                     slot->m_angle = (M_PI_F / 2.0f) + M_PI_F;
@@ -580,6 +586,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
                     continue;
                 }
 
+                if (onlyAlive && (!slot->GetEntity() || !slot->GetEntity()->IsAlive()))
+                    continue;
+
                 if ((membCount & 1) == 0)
                     slot->m_angle = M_PI_F + (M_PI_F / 4.0f);
                 else
@@ -604,6 +613,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
                     continue;
                 }
 
+                if (onlyAlive && (!slot->GetEntity() || !slot->GetEntity()->IsAlive()))
+                    continue;
+
                 slot->m_angle = (M_PI_F / 2.0f) + (M_PI_F / totalMembers) * (membCount - 1);
                 slot->m_distance = defaultDist;
                 ++membCount;
@@ -624,6 +636,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
                     slot->m_distance = 0;
                     continue;
                 }
+
+                if (onlyAlive && (!slot->GetEntity() || !slot->GetEntity()->IsAlive()))
+                    continue;
 
                 slot->m_angle = M_PI_F + (M_PI_F / 2.0f) + (M_PI_F / totalMembers) * (membCount - 1);
                 if (slot->m_angle > M_PI_F * 2.0f)
@@ -647,6 +662,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
                     slot->m_distance = 0;
                     continue;
                 }
+
+                if (onlyAlive && (!slot->GetEntity() || !slot->GetEntity()->IsAlive()))
+                    continue;
 
                 slot->m_angle = ((M_PI_F * 2.0f) / totalMembers) * (membCount - 1);
                 slot->m_distance = defaultDist;
