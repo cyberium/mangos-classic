@@ -2301,24 +2301,25 @@ bool ChatHandler::HandleNpcFormationInfoCommand(char* /*args*/)
         return true;
     }
 
-    PSendSysMessage("Creature is in group id(%u) with formation template(%u) in slot(%u)",
-        currSlot->GetFormationData()->GetGroupGuid(), currSlot->GetFormationData()->GetFormationId(), currSlot->GetSlotId() );
+    PSendSysMessage("Creature is in group id(%u) with formation template(%u)",
+        currSlot->GetFormationData()->GetGroupGuid(), currSlot->GetFormationData()->GetFormationId());
 
     auto slotMap = currSlot->GetFormationData()->GetSlots();
     if (slotMap.size() > 1)
     {
         SendSysMessage("Following creatures are part of the formation");
+        uint32 count = 0;
         for (auto slotItr : slotMap)
         {
             auto slot = slotItr.second;
 
             std::stringstream cinfo;
-            cinfo << "Slot(" << slot->GetSlotId() << ") is ";
+            cinfo << "Slot(" << count << ") is ";
 
-            Creature* creature = slot->GetCreature();
-            if (creature)
+            Unit* slotUnit = slot->GetEntity();
+            if (slotUnit)
             {
-                cinfo << "filled with " << creature->GetGuidStr();
+                cinfo << "filled with " << slotUnit->GetGuidStr();
 
             }
             else

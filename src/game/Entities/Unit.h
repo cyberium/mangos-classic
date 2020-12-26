@@ -45,6 +45,7 @@
 #include "Timer.h"
 #include "AI/BaseAI/UnitAI.h"
 #include "Spells/SpellDefines.h"
+#include "Formation/Formation.h"
 
 #include <list>
 #include <array>
@@ -269,9 +270,6 @@ class Pet;
 class PetAura;
 class Totem;
 class SpellCastTargets;
-
-//forward declaration (declared in Formation.h)
-typedef std::shared_ptr<SlotData> SlotDataSPtr;
 
 struct SpellImmune
 {
@@ -2257,7 +2255,7 @@ class Unit : public WorldObject
         void UpdateSplinePosition();
 
         // formation methods
-        virtual SlotDataSPtr GetFormationSlot() { return nullptr; }
+        virtual FormationSlotSPtr GetFormationSlot() { return nullptr; }
         virtual bool IsFormationMaster() const { return false; }
         virtual void RemoveFromFormation() {}
 
@@ -2378,6 +2376,9 @@ class Unit : public WorldObject
         // Critter: permanent mini-pet unit guid (pre-WotLK compatibility replacement for critter guid field)
         ObjectGuid const& GetCritterGuid() const { return m_critterGuid; }
         void SetCritterGuid(ObjectGuid critterGuid) { m_critterGuid = critterGuid; }
+
+        // if set it mean that creature is in formation with other creatures
+        FormationSlotSPtr m_formationSlot;
 
     private:
         void CleanupDeletedAuras();

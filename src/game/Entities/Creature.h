@@ -24,7 +24,6 @@
 #include "Globals/SharedDefines.h"
 #include "Server/DBCEnums.h"
 #include "Util.h"
-#include "Formation/Formation.h"
 
 #include <list>
 #include <memory>
@@ -898,8 +897,8 @@ class Creature : public Unit
         void ResetSpellHitCounter();
 
         // formation related methods
-        void SetFormationSlot(SlotDataSPtr& sData) { m_formationSlot = sData; }
-        SlotDataSPtr GetFormationSlot() override { return m_formationSlot; }
+        void SetFormationSlot(FormationSlotSPtr& sData) { m_formationSlot = sData; }
+        FormationSlotSPtr GetFormationSlot() override { return m_formationSlot; }
         virtual bool IsFormationMaster() const override { return m_formationSlot ? m_formationSlot->IsMasterSlot() : false; }
         virtual void RemoveFromFormation() override { m_formationSlot = nullptr; }
 
@@ -966,9 +965,6 @@ class Creature : public Unit
 
         // spell scripting persistency
         std::set<uint32> m_hitBySpells;
-
-        // if set it mean that creature is in formation with other creatures
-        SlotDataSPtr m_formationSlot;
 
     private:
         GridReference<Creature> m_gridRef;

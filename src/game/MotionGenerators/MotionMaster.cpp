@@ -351,7 +351,7 @@ void MotionMaster::MoveFollow(Unit* target, float dist, float angle, bool asMain
     Mutate(new FollowMovementGenerator(*target, dist, angle, asMain, m_owner->IsPlayer() && !m_owner->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED)));
 }
 
-void MotionMaster::MoveInFormation(SlotDataSPtr& sData, bool asMain /*= false*/)
+void MotionMaster::MoveInFormation(FormationSlotSPtr& sData, bool asMain /*= false*/)
 {
     if (m_owner->hasUnitState(UNIT_STAT_LOST_CONTROL))
         return;
@@ -361,9 +361,9 @@ void MotionMaster::MoveInFormation(SlotDataSPtr& sData, bool asMain /*= false*/)
     else
         Clear(!empty()); // avoid resetting if we are already empty
 
-    Creature* masterSlot = sData->GetFormationData()->GetMaster();
+    Unit* masterSlot = sData->GetMaster();
     // ignore movement request if target not exist
-    if (!sData->GetCreature() || !masterSlot)
+    if (!sData->GetEntity() || !masterSlot)
         return;
 
     DEBUG_FILTER_LOG(LOG_FILTER_AI_AND_MOVEGENSS, "%s is in formation with %s", m_owner->GetGuidStr().c_str(), masterSlot->GetGuidStr().c_str());

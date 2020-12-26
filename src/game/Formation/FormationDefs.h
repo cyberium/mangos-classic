@@ -24,7 +24,7 @@
 
 struct FormationEntry;
 struct FormationSlotEntry;
-struct SlotData;
+struct FormationSlot;
 struct FormationSlotInfo;
 class FormationMgr;
 class Creature;
@@ -54,7 +54,8 @@ typedef std::shared_ptr<FormationEntry> FormationEntrySPtr;
 typedef std::map<uint32, FormationEntrySPtr> FormationEntryMap;
 typedef std::shared_ptr<FormationData> FormationDataSPtr;
 typedef std::map<uint32, FormationDataSPtr> FormationDataMap;
-typedef std::shared_ptr<SlotData> SlotDataSPtr;
+typedef std::shared_ptr<FormationSlot> FormationSlotSPtr;
+typedef std::map<uint32, FormationSlotSPtr> FormationSlotMap;
 
 struct FormationSlotEntry
 {

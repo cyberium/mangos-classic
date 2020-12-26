@@ -243,8 +243,8 @@ class FollowMovementGenerator : public TargetedMovementGeneratorMedium<Unit, Fol
 class FormationMovementGenerator : public FollowMovementGenerator
 {
 public:
-    FormationMovementGenerator(SlotDataSPtr& sData, bool main) :
-        FollowMovementGenerator(*sData->GetFormationData()->GetMaster(), sData->GetDistance(), float(sData->GetAngle()), main, false),
+    FormationMovementGenerator(FormationSlotSPtr& sData, bool main) :
+        FollowMovementGenerator(*sData->GetMaster(), sData->GetDistance(), float(sData->GetAngle()), main, false),
         m_slot(sData), m_formationId(m_slot->GetFormationId())
     {
     }
@@ -264,7 +264,7 @@ private:
     virtual void _setLocation(Unit& owner, bool catchup) override;
     bool GetPointAround(G3D::Vector3 const& originalPoint, G3D::Vector3& foundPos, float angle, float distance, bool isOnTheGround);
     float BuildPath(Unit& owner, PointsArray& path, int32 timeAhead);
-    SlotDataSPtr m_slot;
+    FormationSlotSPtr m_slot;
     uint32 m_formationId;
 };
 

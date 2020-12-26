@@ -142,7 +142,7 @@ Creature::Creature(CreatureSubtype subtype) : Unit(),
     m_originalEntry(0), m_dbGuid(0), m_ai(nullptr),
     m_isInvisible(false), m_ignoreMMAP(false), m_forceAttackingCapability(false), m_countSpawns(false),
     m_creatureInfo(nullptr),
-    m_noXP(false), m_noLoot(false), m_noReputation(false), m_formationSlot(nullptr)
+    m_noXP(false), m_noLoot(false), m_noReputation(false)
 {
     m_regenTimer = 200;
     m_valuesCount = UNIT_END;
@@ -160,9 +160,6 @@ Creature::~Creature()
 
 void Creature::CleanupsBeforeDelete()
 {
-    if (m_formationSlot)
-        m_formationSlot->GetFormationData()->OnCreatureDelete(this);
-
     Unit::CleanupsBeforeDelete();
     m_vendorItemCounts.clear();
 }
@@ -382,7 +379,7 @@ bool Creature::InitEntry(uint32 Entry, CreatureData const* data /*=nullptr*/, Ga
         if (data->spawnTemplate->equipmentId != -1)
             LoadEquipment(data->spawnTemplate->equipmentId);
         else if (data->equipmentId != -1)
-            LoadEquipment(data->equipmentId);        
+            LoadEquipment(data->equipmentId);
     }
 
     SetName(normalInfo->Name);                              // at normal entry always

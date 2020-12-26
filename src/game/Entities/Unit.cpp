@@ -322,7 +322,8 @@ Unit::Unit() :
     m_spellProcsHappening(false),
     m_auraUpdateMask(0),
     m_ignoreRangedTargets(false),
-    m_combatManager(this)
+    m_combatManager(this),
+    m_formationSlot(nullptr)
 {
     m_objectType |= TYPEMASK_UNIT;
     m_objectTypeId = TYPEID_UNIT;
@@ -1116,7 +1117,7 @@ void Unit::HandleDamageDealt(Unit* dealer, Unit* victim, uint32& damage, CleanDa
         for (auto aura : cleanupHolder)
             victim->RemoveAurasDueToSpell(aura);
     }
-    
+
     if (dealer)
         dealer->InterruptOrDelaySpell(victim, damagetype);
 
@@ -5633,7 +5634,7 @@ void Unit::SendAttackStateUpdate(CalcDamageInfo* calcDamageInfo) const
     SendMessageToSet(data, true);
 }
 
-void Unit::SendAttackStateUpdate(uint32 HitInfo, Unit* target, SpellSchoolMask damageSchoolMask, uint32 Damage, 
+void Unit::SendAttackStateUpdate(uint32 HitInfo, Unit* target, SpellSchoolMask damageSchoolMask, uint32 Damage,
                                  uint32 AbsorbDamage, int32 Resist, VictimState TargetState, uint32 BlockedAmount)
 {
     CalcDamageInfo dmgInfo;
@@ -5702,7 +5703,7 @@ FactionTemplateEntry const* Unit::GetFactionTemplateEntry() const
             guid = GetObjectGuid();
 
             if (guid.GetHigh() == HIGHGUID_PET)
-                sLog.outError("%s (base creature entry %u) have invalid faction template id %u, owner %s", 
+                sLog.outError("%s (base creature entry %u) have invalid faction template id %u, owner %s",
                     GetGuidStr().c_str(), GetEntry(), getFaction(), ((Pet*)this)->GetOwnerGuid().GetString().c_str());
             else
                 sLog.outError("%s have invalid faction template id %u", GetGuidStr().c_str(), getFaction());
@@ -6918,7 +6919,7 @@ bool Unit::IsImmuneToSpell(SpellEntry const* spellInfo, bool /*castOnSelf*/, uin
             return true;
 
     {
-        if (!spellInfo->HasAttribute(SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY) && 
+        if (!spellInfo->HasAttribute(SPELL_ATTR_UNAFFECTED_BY_INVULNERABILITY) &&
                 !spellInfo->HasAttribute(SPELL_ATTR_EX_DISPEL_AURAS_ON_IMMUNITY))
         {
             bool isPositive = IsPositiveEffectMask(spellInfo, effectMask);
@@ -8892,6 +8893,9 @@ void Unit::RemoveFromWorld()
 
 void Unit::CleanupsBeforeDelete()
 {
+    if (m_formationSlot)
+        m_formationSlot->GetFormationData()->OnEntityDelete(this);
+
     if (m_uint32Values)                                     // only for fully created object
     {
         InterruptNonMeleeSpells(true);
@@ -9051,7 +9055,7 @@ void CharmInfo::InitCharmCreateSpells()
             m_charmspells[x].SetActionAndType(spellId, ACT_DISABLED);
 
             ActiveStates newstate;
-            bool onlyselfcast = true;            
+            bool onlyselfcast = true;
 
             for (uint32 i = 0; i < 3 && onlyselfcast; ++i)  // nonexistent spell will not make any problems as onlyselfcast would be false -> break right away
             {
@@ -10701,7 +10705,7 @@ bool Unit::TakeCharmOf(Unit* charmed, uint32 spellId, bool advertised /*= true*/
 
         // vanilla core only code - what is this for?
         charmedPlayer->ForceHealAndPowerUpdateInZone();
-        
+
         charmedPlayer->SendForcedObjectUpdate();
     }
     else if (charmed->GetTypeId() == TYPEID_UNIT)
@@ -10891,7 +10895,7 @@ void Unit::Uncharm(Unit* charmed, uint32 spellId)
 
     // if charm expires mid evade clear evade since movement is also cleared
     // TODO: maybe should be done on HomeMovementGenerator::MovementExpires
-    charmed->GetCombatManager().SetEvadeState(EVADE_NONE); 
+    charmed->GetCombatManager().SetEvadeState(EVADE_NONE);
 
     if (charmed->GetTypeId() == TYPEID_UNIT)
     {
@@ -10991,7 +10995,7 @@ void Unit::Uncharm(Unit* charmed, uint32 spellId)
                 Position const& pos = charmInfo->GetCharmStartPosition();
                 if (!pos.IsEmpty())
                     static_cast<Creature*>(charmed)->SetCombatStartPosition(pos);
-            }                
+            }
         }
     }
     else
