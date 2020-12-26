@@ -426,6 +426,9 @@ void FormationData::OnRespawn(Creature* creature)
     if (freeSlot != oldSlot)
         Replace(creature, freeSlot);
 
+    if (m_keepCompact)
+        FixSlotsPositions(true);
+
     creature->GetMotionMaster()->Clear(false, true);
     creature->GetMotionMaster()->MoveInFormation(freeSlot);
 }
@@ -484,6 +487,7 @@ void FormationData::Replace(Creature* creature, FormationSlotSPtr slot /*= nullp
 void FormationData::Compact()
 {
     FixSlotsPositions(true);
+    m_keepCompact = true;
 }
 
 void FormationData::Add(Creature* creature)

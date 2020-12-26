@@ -62,8 +62,9 @@ public:
     FormationData(CreaturesGroupEntrySPtr groupTableEntry) :
         m_groupTableEntry(groupTableEntry), m_currentFormationShape(groupTableEntry->formationEntry->formationType),
         m_masterSlot(nullptr), m_formationEnabled(true), m_realMaster(nullptr), m_mirrorState(false),
-        m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM), m_masterCheck(0),
-        m_lastWP(0), m_wpPathId(0), m_realMasterGuid(groupTableEntry->masterSlot->defaultCreatureGuid)
+        m_keepCompact(false), m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM),
+        m_masterCheck(0), m_lastWP(0), m_wpPathId(0),
+        m_realMasterGuid(groupTableEntry->masterSlot->defaultCreatureGuid)
     {}
     FormationData() = delete;
 
@@ -111,6 +112,7 @@ private:
     bool m_formationEnabled;
     bool m_mirrorState;
     bool m_needToFixPositions;
+    bool m_keepCompact;
 
     uint32 m_lastWP;
     uint32 m_wpPathId;
