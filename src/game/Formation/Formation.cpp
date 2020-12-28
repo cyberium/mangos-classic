@@ -120,14 +120,6 @@ void FormationMgr::SetFormationSlot(Creature* creature)
     }
 }
 
-FormationSlotInfo const* FormationMgr::GetFormationSlotInfo(uint32 guid)
-{
-    auto fDataItr = m_slotInfos.find(guid);
-    if (fDataItr != m_slotInfos.end())
-        return fDataItr->second.get();
-    return nullptr;
-}
-
 FormationEntrySPtr FormationMgr::GetFormationEntry(uint32 groupId)
 {
     auto fEntry = m_formationEntries.find(groupId);
@@ -154,15 +146,8 @@ FormationDataSPtr FormationMgr::CreateDynamicFormation(Creature* creatureMaster,
         fEntry->distance = 1;
         fEntry->groupTableEntry = groupData;
         groupData->formationEntry = fEntry;
-
-        groupData->formationEntry = fEntry;
         fData = std::make_shared<FormationData>(groupData);
         creatureMaster->GetMap()->AddFormation(fData);
-
-        fEntry->slots.emplace(creatureMaster->GetGUIDLow(), new FormationSlotEntry(0, 0, 1, fEntry));
-
-        auto slotEmplItr = groupData->creatureSlot.emplace(creatureMaster->GetGUIDLow(),new CreatureGroupSlotEntry(0, creatureMaster->GetGUIDLow(), groupData));
-
         fData->AddSlot(creatureMaster);
     }
     return fData;

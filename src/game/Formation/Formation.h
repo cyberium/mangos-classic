@@ -37,7 +37,6 @@ public:
     void Initialize();
 
     void SetFormationSlot(Creature* creature);
-    FormationSlotInfo const* GetFormationSlotInfo(uint32 guid);
     FormationEntrySPtr GetFormationEntry(uint32 groupId);
 
     FormationDataSPtr CreateDynamicFormation(Creature* creatureMaster, GroupFormationType type = GROUP_FORMATION_TYPE_SINGLE_FILE);
@@ -51,7 +50,6 @@ private:
     void LoadGroupFormation();
 
     FormationEntryMap m_formationEntries;
-    FormationSlotInfoMap m_slotInfos;
 };
 
 enum class MasterMotionType
