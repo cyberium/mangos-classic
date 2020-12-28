@@ -450,6 +450,8 @@ class ChatHandler
         bool HandleNpcFormationSwitchCommand(char* args);
         bool HandleNpcFormationSetMasterCommand(char* args);
         bool HandleNpcFormationCompactCommand(char* args);
+        bool HandleNpcFormationAddCommand(char* args);
+        bool HandleNpcFormationCreateCommand(char* args);
         bool HandleNpcInfoCommand(char* args);
         bool HandleNpcThreatCommand(char* args);
         bool HandleNpcMoveCommand(char* args);

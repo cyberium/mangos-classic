@@ -25,7 +25,9 @@
 class CreaturesGroupMgr
 {
 public:
-    CreaturesGroupMgr() {}
+    CreaturesGroupMgr() :
+        m_groupEntryGuidCounter(CREATURE_GROUP_FIRST_DYNAMIC_GUID)     // reserve for static group
+    {}
 
     void Initialize();
     CreaturesGroupEntrySPtr GetEntryByCreatureGuid(uint32 guid, uint32 map)
@@ -43,10 +45,13 @@ public:
         return nullptr;
     }
 
+    CreaturesGroupEntrySPtr AddDynamicGroup(Creature* creatureMaster);
+
 private:
     GroupTemplateEntryMap m_groupTemplateEntries;
     CreaturesGroupEntryMap m_groupGuids;
     CreatureGroupMap m_groupsData;
+    uint32 m_groupEntryGuidCounter;
 
     void LoadGroupTemplates();
     void LoadGroups();

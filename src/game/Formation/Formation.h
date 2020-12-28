@@ -36,9 +36,14 @@ public:
 
     void Initialize();
 
-    template<typename T> void SetFormationSlot(T* obj, Map* map) {};
+    void SetFormationSlot(Creature* creature);
     FormationSlotInfo const* GetFormationSlotInfo(uint32 guid);
     FormationEntrySPtr GetFormationEntry(uint32 groupId);
+
+    FormationDataSPtr CreateDynamicFormation(Creature* creatureMaster, GroupFormationType type = GROUP_FORMATION_TYPE_SINGLE_FILE);
+
+    template <typename T>
+    bool AddMemberToDynGroup(Creature* master, T* entity);
 
     void Update(FormationDataMap& fDataMap);
 
@@ -48,7 +53,6 @@ private:
     FormationEntryMap m_formationEntries;
     FormationSlotInfoMap m_slotInfos;
 };
-template<> void FormationMgr::SetFormationSlot<Creature>(Creature* creature, Map* map);
 
 enum class MasterMotionType
 {
@@ -76,9 +80,12 @@ public:
 
     void SetMirrorState(bool state) { m_mirrorState = state; };
     bool GetMirrorState() const { return m_mirrorState; }
-    void FillSlot(CreatureGroupSlotEntrySPtr& slot, Creature* creature);
+
+    void AddSlot(Player* player);
+    void AddSlot(Creature* creature);
     Unit* GetMaster();
     FormationSlotSPtr GetMasterSlot() { return m_masterSlot; };
+    uint32 GetRealMasterGuid() const { return m_realMasterGuid; }
     void Update(uint32 diff);
     void Reset();
 

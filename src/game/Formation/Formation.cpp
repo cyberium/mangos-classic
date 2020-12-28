@@ -78,6 +78,7 @@ void FormationMgr::LoadGroupFormation()
                 fEntry->formationId = groupGuid;
                 fEntry->formationType = GroupFormationType(formationType);
                 fEntry->options = options;
+                fEntry->dynamic = false;
                 fEntry->distance = distance;
                 fEntry->groupTableEntry = creatureGroup;
                 creatureGroup->formationEntry = fEntry;
@@ -96,18 +97,26 @@ void FormationMgr::Initialize()
     LoadGroupFormation();
 }
 
-template<> void FormationMgr::SetFormationSlot<Creature>(Creature* creature, Map* map)
+void FormationMgr::SetFormationSlot(Creature* creature)
 {
+    Map* map = creature->GetMap();
     auto& groupData = sCreatureGroupMgr.GetEntryByCreatureGuid(creature->GetGUIDLow(), map->GetId());
     if (groupData)
     {
-        auto& slot = groupData->GetSlotByCreatureGuid(creature->GetGUIDLow());
+        CreatureGroupSlotEntrySPtr slot = groupData->GetSlotByCreatureGuid(creature->GetGUIDLow());
         if (!slot)
             return;
 
         sLog.outString("Setting formation slot for %s", creature->GetGuidStr().c_str());
         auto fData = map->GetFormationData(groupData);
-        fData->FillSlot(slot, creature);
+
+        if (!fData)
+        {
+            fData = std::make_shared<FormationData>(groupData);
+            map->AddFormation(fData);
+        }
+
+        fData->AddSlot(creature);
     }
 }
 
@@ -126,6 +135,58 @@ FormationEntrySPtr FormationMgr::GetFormationEntry(uint32 groupId)
         return fEntry->second;
     return nullptr;
 }
+
+FormationDataSPtr FormationMgr::CreateDynamicFormation(Creature* creatureMaster, GroupFormationType type /*= GROUP_FORMATION_TYPE_SINGLE_FILE*/)
+{
+    FormationDataSPtr fData = nullptr;
+    if (creatureMaster->GetFormationSlot())
+        return creatureMaster->GetFormationSlot()->GetFormationData();
+
+    auto groupData = sCreatureGroupMgr.AddDynamicGroup(creatureMaster);
+    if (groupData)
+    {
+        auto formEmplItr = m_formationEntries.emplace(groupData->guid, new FormationEntry());
+        auto fEntry = formEmplItr.first->second;
+        fEntry->formationId = groupData->guid;
+        fEntry->formationType = type;
+        fEntry->options = 0;
+        fEntry->dynamic = true;
+        fEntry->distance = 1;
+        fEntry->groupTableEntry = groupData;
+        groupData->formationEntry = fEntry;
+
+        groupData->formationEntry = fEntry;
+        fData = std::make_shared<FormationData>(groupData);
+        creatureMaster->GetMap()->AddFormation(fData);
+
+        fEntry->slots.emplace(creatureMaster->GetGUIDLow(), new FormationSlotEntry(0, 0, 1, fEntry));
+
+        auto slotEmplItr = groupData->creatureSlot.emplace(creatureMaster->GetGUIDLow(),new CreatureGroupSlotEntry(0, creatureMaster->GetGUIDLow(), groupData));
+
+        fData->AddSlot(creatureMaster);
+    }
+    return fData;
+}
+
+template<typename T>
+bool FormationMgr::AddMemberToDynGroup(Creature* master, T* entity)
+{
+    if (!master || !entity)
+        return false;
+
+    if (master->GetMapId() != entity->GetMapId())
+        return false;
+
+    auto fData = master->GetFormationSlot()->GetFormationData();
+    if (!fData)
+        return false;
+
+    fData->AddSlot(entity);
+
+    return true;
+}
+template bool FormationMgr::AddMemberToDynGroup<Creature>(Creature*, Creature*);
+template bool FormationMgr::AddMemberToDynGroup<Player>(Creature*, Player*);
 
 void FormationMgr::Update(FormationDataMap& fDataMap)
 {
@@ -227,14 +288,14 @@ void FormationData::ClearMoveGen()
     }
 }
 
-void FormationData::FillSlot(CreatureGroupSlotEntrySPtr& slot, Creature* creature)
+void FormationData::AddSlot(Creature* creature)
 {
     FormationSlotSPtr sData = nullptr;
-    auto existingSlotItr = m_slotMap.find(slot->slotId);
+    auto existingSlotItr = m_slotMap.find(creature->GetGUIDLow());
     if (existingSlotItr == m_slotMap.end())
     {
         sData = FormationSlotSPtr(new FormationSlot(creature, this));
-        m_slotMap.emplace(slot->slotId, sData);
+        m_slotMap.emplace(creature->GetGUIDLow(), sData);
     }
     else
     {
@@ -245,11 +306,11 @@ void FormationData::FillSlot(CreatureGroupSlotEntrySPtr& slot, Creature* creatur
     creature->SetFormationSlot(sData);
     creature->SetActiveObjectState(true);
 
-    sLog.outString("Slot(%u) filled by %s in formation(%u)", slot->slotId, creature->GetGuidStr().c_str(), slot->creatureGroupEntry->formationEntry->formationId);
+    sLog.outString("Slot filled by %s in formation(%u)", creature->GetGuidStr().c_str(), GetGroupGuid());
 
     uint32 lowGuid = creature->GetGUIDLow();
 
-    if (slot->slotId == 0 && !m_realMaster)
+    if (!m_realMaster)
     {
         m_formationEnabled = true;
         m_realMaster = creature;
@@ -270,7 +331,37 @@ void FormationData::FillSlot(CreatureGroupSlotEntrySPtr& slot, Creature* creatur
         }
     }
 
-    if (m_realMaster && creature->IsAlive())
+    if (creature->IsAlive())
+        SetFollowersMaster();
+
+    m_needToFixPositions = true;
+}
+
+void FormationData::AddSlot(Player* player)
+{
+    if (!m_realMaster)
+    {
+        sLog.outError("FormationData::AddSlot> cannot add %s to formation(%u). Formation have no master!", player->GetGuidStr().c_str(), GetGroupGuid());
+        return;
+    }
+
+    FormationSlotSPtr sData = nullptr;
+    auto existingSlotItr = m_slotMap.find(player->GetGUIDLow());
+    if (existingSlotItr == m_slotMap.end())
+    {
+        sData = FormationSlotSPtr(new FormationSlot(player, this));
+        m_slotMap.emplace(player->GetGUIDLow(), sData);
+    }
+    else
+    {
+        sData = existingSlotItr->second;
+        sData->m_entity = player;
+    }
+
+    player->SetFormationSlot(sData);
+
+    sLog.outString("Slot filled by %s in formation(%u)", player->GetGuidStr().c_str(), GetGroupGuid());
+    if (player->IsAlive())
         SetFollowersMaster();
 }
 

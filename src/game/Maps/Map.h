@@ -36,6 +36,7 @@
 #include "vmap/DynamicTree.h"
 #include "Multithreading/Messager.h"
 #include "Formation/Formation.h"
+#include "CreatureGroup/CreatureGroupDefs.h"
 
 #include <bitset>
 #include <functional>
@@ -334,7 +335,11 @@ class Map : public GridRefManager<NGridType>
         void RemoveTransport(Transport* transport);
 
         // formation data
-        FormationData* GetFormationData(CreaturesGroupEntrySPtr& grpEntry);
+        FormationDataSPtr GetFormationData(CreaturesGroupEntrySPtr& grpEntry);
+        bool AddFormation(FormationDataSPtr& fData);
+        CreaturesGroupEntrySPtr GetGroupData(uint32 guid);
+        void AddGroupData(CreaturesGroupEntrySPtr& gEntry, uint32 guid);
+
 
     private:
         void LoadMapAndVMap(int gx, int gy);
@@ -443,6 +448,7 @@ class Map : public GridRefManager<NGridType>
 
         // Formations data
         FormationDataMap m_formationData;
+        CreaturesGroupEntryMap m_groupData;
 };
 
 class WorldMap : public Map

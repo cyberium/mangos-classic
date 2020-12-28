@@ -2419,7 +2419,7 @@ bool ChatHandler::HandleNpcFormationSetMasterCommand(char* args)
     return true;
 }
 
-// change creature formation template
+// compact formation to fill eventual gap
 bool ChatHandler::HandleNpcFormationCompactCommand(char* args)
 {
     Creature* creature = getSelectedCreature();
@@ -2440,6 +2440,131 @@ bool ChatHandler::HandleNpcFormationCompactCommand(char* args)
 
     currSlot->GetFormationData()->Compact();
     return true;
+}
+
+// compact formation to fill eventual gap
+bool ChatHandler::HandleNpcFormationAddCommand(char* args)
+{
+    Creature* creature = getSelectedCreature();
+
+    if (!creature)
+    {
+        SendSysMessage(LANG_SELECT_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    uint32 masterGuid = 0;
+    !ExtractUInt32(&args, masterGuid);
+
+    // TODO::should definitively change that lookup method!!!!
+    // Get all creatures in 100y radius
+    CreatureList foundCreatures;
+    MaNGOS::AnyUnitInObjectRangeCheck u_check(creature, 100);
+    MaNGOS::CreatureListSearcher<MaNGOS::AnyUnitInObjectRangeCheck> searcher(foundCreatures, u_check);
+    Cell::VisitGridObjects(creature, searcher, 100);
+
+    Creature* master = nullptr;
+    Creature* nearestMaster = nullptr;
+    if (masterGuid)
+    {
+        for (auto target : foundCreatures)
+        {
+            if (target->GetGUIDLow() == masterGuid)
+            {
+                master = target;
+                break;
+            }
+        }
+    }
+    else
+    {
+        for (auto target : foundCreatures)
+        {
+            if (target != creature)
+            {
+                if (target->GetFormationSlot() && target->GetFormationSlot()->IsMasterSlot())
+                {
+                    if (nearestMaster)
+                    {
+                        float dist = creature->GetDistance(nearestMaster);
+                        if (creature->GetDistance(target) < dist)
+                            nearestMaster = target;
+                    }
+                    else
+                        nearestMaster = target;
+                }
+            }
+        }
+    }
+
+    if (!master)
+    {
+        if (!nearestMaster)
+        {
+            if(masterGuid)
+                SendSysMessage("Provided master guid is not found around!");
+            else
+            {
+                SendSysMessage("No master found around(100y)!\nYou can provide one using following command:\n.npc formation add MASTER_GUID");
+            }
+            return true;
+        }
+        PSendSysMessage("Found %s as nearest formation master!", nearestMaster->GetGuidStr().c_str());
+        master = nearestMaster;
+    }
+
+    auto masterSlot = master->GetFormationSlot();
+    if (!masterSlot)
+    {
+        SendSysMessage("Provided guid for master is not in formation!");
+        return true;
+    }
+
+    if (!masterSlot->IsMasterSlot())
+    {
+        SendSysMessage("Provided guid is not the master in its formation!");
+        return true;
+    }
+
+    auto currSlot = creature->GetFormationSlot();
+    if (currSlot)
+    {
+        SendSysMessage("Creature is already in formation");
+        return true;
+    }
+
+    sFormationMgr.AddMemberToDynGroup(master, creature);
+    return true;
+}
+
+// create formation with selected creature as master
+bool ChatHandler::HandleNpcFormationCreateCommand(char* args)
+{
+    Creature* creature = getSelectedCreature();
+
+    if (!creature)
+    {
+        SendSysMessage(LANG_SELECT_CREATURE);
+        SetSentErrorMessage(true);
+        return false;
+    }
+
+    auto currSlot = creature->GetFormationSlot();
+    if (currSlot)
+    {
+        SendSysMessage("Creature is already in formation");
+        return true;
+    }
+
+    auto fData = sFormationMgr.CreateDynamicFormation(creature);
+    if (fData)
+    {
+        //sFormationMgr.SetFormationSlot(creature);
+        SendSysMessage("Formation is created!");
+    }
+    return true;
+
 }
 
 // TODO: NpcCommands that need to be fixed :

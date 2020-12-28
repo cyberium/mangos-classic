@@ -2562,18 +2562,43 @@ void Map::RemoveFromSpawnCount(const ObjectGuid& guid)
     m_spawnedCount[guid.GetEntry()].erase(guid);
 }
 
-FormationData* Map::GetFormationData(CreaturesGroupEntrySPtr& grpEntry)
+FormationDataSPtr Map::GetFormationData(CreaturesGroupEntrySPtr& grpEntry)
 {
-    FormationData* fData = nullptr;
+    FormationDataSPtr fData = nullptr;
 
     auto dataItr = m_formationData.find(grpEntry->guid);
-    if (dataItr == m_formationData.end())
-    {
-        fData = new FormationData(grpEntry);
-        m_formationData.emplace(grpEntry->guid, fData);
-    }
-    else
-        fData = dataItr->second.get();
+    if (dataItr != m_formationData.end())
+        fData = dataItr->second;
 
     return fData;
+}
+
+bool Map::AddFormation(FormationDataSPtr& fData)
+{
+    auto dataItr = m_formationData.find(fData->GetGroupGuid());
+    if (dataItr == m_formationData.end())
+        m_formationData.emplace(fData->GetGroupGuid(), fData);
+    else
+    {
+        // Formation already exist
+        sLog.outError("Map::AddFormation> trying to add already existing formation! GroupGuid(%u), FormationId(%u), MasterGuid(%u)",
+            fData->GetGroupGuid(), fData->GetFormationId(), fData->GetRealMasterGuid());
+        return false;
+    }
+    return true;
+}
+
+CreaturesGroupEntrySPtr Map::GetGroupData(uint32 guid)
+{
+    auto dataItr = m_groupData.find(guid);
+    if (dataItr != m_groupData.end())
+        return dataItr->second;
+    return nullptr;
+}
+
+void Map::AddGroupData(CreaturesGroupEntrySPtr& gEntry, uint32 guid)
+{
+    auto dataItr = m_groupData.find(guid);
+    if (dataItr == m_groupData.end())
+        m_groupData.emplace(guid, gEntry);
 }

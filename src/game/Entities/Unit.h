@@ -2254,10 +2254,11 @@ class Unit : public WorldObject
 
         void UpdateSplinePosition();
 
-        // formation methods
-        virtual FormationSlotSPtr GetFormationSlot() { return nullptr; }
-        virtual bool IsFormationMaster() const { return false; }
-        virtual void RemoveFromFormation() {}
+        // formation related methods
+        void SetFormationSlot(FormationSlotSPtr& sData) { m_formationSlot = sData; }
+        FormationSlotSPtr GetFormationSlot() { return m_formationSlot; }
+        virtual bool IsFormationMaster() const { return m_formationSlot ? m_formationSlot->IsMasterSlot() : false; }
+        virtual void RemoveFromFormation() { m_formationSlot = nullptr; }
 
     protected:
 

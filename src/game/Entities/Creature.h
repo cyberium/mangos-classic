@@ -896,12 +896,6 @@ class Creature : public Unit
         void RegisterHitBySpell(uint32 spellId);
         void ResetSpellHitCounter();
 
-        // formation related methods
-        void SetFormationSlot(FormationSlotSPtr& sData) { m_formationSlot = sData; }
-        FormationSlotSPtr GetFormationSlot() override { return m_formationSlot; }
-        virtual bool IsFormationMaster() const override { return m_formationSlot ? m_formationSlot->IsMasterSlot() : false; }
-        virtual void RemoveFromFormation() override { m_formationSlot = nullptr; }
-
     protected:
         bool MeetsSelectAttackingRequirement(Unit* pTarget, SpellEntry const* pSpellInfo, uint32 selectFlags, SelectAttackingTargetParams params) const;
 

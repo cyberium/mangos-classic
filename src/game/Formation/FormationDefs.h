@@ -33,7 +33,6 @@ class MovementGenerator;
 class PathFinder;
 class Map;
 
-
 const uint32 MAX_GROUP_FORMATION_TYPE = 7;
 enum GroupFormationType
 {
@@ -55,7 +54,7 @@ typedef std::map<uint32, FormationEntrySPtr> FormationEntryMap;
 typedef std::shared_ptr<FormationData> FormationDataSPtr;
 typedef std::map<uint32, FormationDataSPtr> FormationDataMap;
 typedef std::shared_ptr<FormationSlot> FormationSlotSPtr;
-typedef std::map<uint32, FormationSlotSPtr> FormationSlotMap;
+typedef std::unordered_map<uint32, FormationSlotSPtr> FormationSlotMap;
 
 struct FormationSlotEntry
 {
@@ -82,6 +81,7 @@ struct FormationEntry
     uint32 formationId;
     GroupFormationType formationType;
     uint32 options;
+    bool dynamic;
     float distance;
     CreaturesGroupEntrySPtr groupTableEntry;
 

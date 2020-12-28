@@ -21,6 +21,8 @@
 
 #include "Common.h"
 
+const uint32 CREATURE_GROUP_FIRST_DYNAMIC_GUID = 0x01FFFFFF;
+
 // Needed forward declaration
 struct FormationEntry;
 struct CreraturesGroupTemplateEntry;
@@ -74,14 +76,14 @@ struct CreraturesGroupTemplateEntry
 
 struct CreaturesGroupEntry
 {
-    CreaturesGroupEntry(uint32 _guid, GroupTemplateEntrySPtr& _groupTemplateEntry, CreatureGroupSlotMapSPtr _slot, FormationEntrySPtr fEntry = nullptr) :
-        groupTemplateEntry(_groupTemplateEntry), guid(_guid), masterSlot(nullptr), creatureSlot(_slot), formationEntry(fEntry) {}
+    CreaturesGroupEntry(uint32 _guid, GroupTemplateEntrySPtr& _groupTemplateEntry, FormationEntrySPtr fEntry = nullptr) :
+        groupTemplateEntry(_groupTemplateEntry), guid(_guid), masterSlot(nullptr), formationEntry(fEntry) {}
     CreaturesGroupEntry() = delete;
 
     CreatureGroupSlotEntrySPtr GetSlotByCreatureGuid(uint32 guid)
     {
-        auto& result = creatureSlot->find(guid);
-        if (result != creatureSlot->end())
+        auto& result = creatureSlot.find(guid);
+        if (result != creatureSlot.end())
             return result->second;
 
         return nullptr;
@@ -89,7 +91,7 @@ struct CreaturesGroupEntry
 
     uint32 guid;
     CreatureGroupSlotEntrySPtr masterSlot;
-    CreatureGroupSlotMapSPtr creatureSlot;
+    CreatureGroupSlotMap creatureSlot;
     GroupTemplateEntrySPtr groupTemplateEntry;
     FormationEntrySPtr formationEntry;
 };

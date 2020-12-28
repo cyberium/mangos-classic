@@ -1549,7 +1549,7 @@ bool Creature::LoadFromDB(uint32 dbGuid, Map* map, uint32 newGuid, GenericTransp
 
     AIM_Initialize();
 
-    sFormationMgr.SetFormationSlot(this, GetMap());
+    sFormationMgr.SetFormationSlot(this);
 
     // Creature Linking, Initial load is handled like respawn
     if (m_isCreatureLinkingTrigger && IsAlive())
