@@ -49,6 +49,11 @@ typedef std::map<uint32, FormationDataSPtr> FormationDataMap;
 typedef std::shared_ptr<FormationSlot> FormationSlotSPtr;
 typedef std::unordered_map<uint32, FormationSlotSPtr> FormationSlotMap;
 
+struct RespawnPosistion
+{
+    float x, y, z, radius;
+};
+
 struct FormationEntry
 {
     uint32 formationId;

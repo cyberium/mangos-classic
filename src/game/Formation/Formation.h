@@ -64,11 +64,12 @@ public:
     FormationData(CreaturesGroupEntrySPtr groupTableEntry) :
         m_groupTableEntry(groupTableEntry), m_currentFormationShape(groupTableEntry->formationEntry->formationType),
         m_masterSlot(nullptr), m_formationEnabled(true), m_realMaster(nullptr), m_mirrorState(false),
-        m_keepCompact(false), m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM),
+        m_keepCompact(false), m_validFormation(true), m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM),
         m_masterCheck(0), m_lastWP(0), m_wpPathId(0),
         m_realMasterGuid(groupTableEntry->masterSlot->defaultCreatureGuid)
     {}
     FormationData() = delete;
+    ~FormationData();
 
     void SetFollowersMaster();
     bool SwitchFormation(uint32 fId);
@@ -79,12 +80,12 @@ public:
     void SetMirrorState(bool state) { m_mirrorState = state; };
     bool GetMirrorState() const { return m_mirrorState; }
 
-    void AddSlot(Player* player);
-    void AddSlot(Creature* creature);
+    void AddSlot(Player* player, FormationDataSPtr& fData);
+    void AddSlot(Creature* creature, FormationDataSPtr& fData);
     Unit* GetMaster();
     FormationSlotSPtr GetMasterSlot() { return m_masterSlot; };
     uint32 GetRealMasterGuid() const { return m_realMasterGuid; }
-    void Update(uint32 diff);
+    bool Update(uint32 diff);
     void Reset();
 
     void OnMasterRemoved() { m_formationEnabled = false; }
@@ -118,10 +119,12 @@ private:
     bool m_mirrorState;
     bool m_needToFixPositions;
     bool m_keepCompact;
+    bool m_validFormation;
 
     uint32 m_lastWP;
     uint32 m_wpPathId;
     uint32 m_realMasterGuid;
+    RespawnPosistion m_spawnPos;
 
     Creature* m_realMaster;
 
@@ -134,8 +137,10 @@ struct FormationSlot
     friend class FormationData;
 
 public:
-    FormationSlot(Unit* _entity, FormationData* fData);
+    FormationSlot(Unit* _entity, FormationDataSPtr& fData);
     FormationSlot() = delete;
+
+    ~FormationSlot();
 
     // some helper
     uint32 GetFormationId() const { return m_formationData->GetFormationId(); }
@@ -152,11 +157,12 @@ public:
     bool IsMasterSlot() const;
 
     FormationDataSPtr GetFormationData() { return m_formationData; }
-    virtual uint32 GetDefaultGuid() const { return 0; }
+    virtual uint32 GetDefaultGuid() const { return m_entityGuid; }
 
 private:
     float m_angle;
     float m_distance;
+    uint32 m_entityGuid;
     Unit* m_entity;
 
     FormationDataSPtr m_formationData;
@@ -166,7 +172,7 @@ private:
 struct CreatureFormationSlot : public FormationSlot
 {
 public:
-    CreatureFormationSlot(Creature* _creature, FormationData* fData);
+    CreatureFormationSlot(Creature* _creature, FormationDataSPtr& fData);
 
     uint32 GetDefaultGuid() const override { return m_defaultGuid; }
 private:
@@ -176,7 +182,7 @@ private:
 struct PlayerFormationSlot : public FormationSlot
 {
 public:
-    PlayerFormationSlot(Player* _player, FormationData* fData);
+    PlayerFormationSlot(Player* _player, FormationDataSPtr& fData);
 
     uint32 GetDefaultGuid() const override { return m_defaultGuid; }
 private:

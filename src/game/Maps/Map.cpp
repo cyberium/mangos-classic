@@ -742,9 +742,17 @@ void Map::Update(const uint32& t_diff)
 
     meas.add_field("count", std::to_string(static_cast<int32>(count)));
 
-    // update formations
-    for (auto& fData : m_formationData)
-        fData.second->Update(t_diff);
+    // update formations and delete invalid one (no creatures loaded)
+    for (auto fItr = m_formationData.cbegin(), nextItr = fItr; fItr != m_formationData.cend(); fItr = nextItr)
+    {
+        ++nextItr;
+        if (!fItr->second->Update(t_diff))
+        {
+            sLog.outDebug("Map::Update> Deleting formation id(%u)", fItr->second->GetFormationId());
+            // remove unused formation data
+            m_formationData.erase(fItr);
+        }
+    }
 
     // Send world objects and item update field changes
     SendObjectUpdates();

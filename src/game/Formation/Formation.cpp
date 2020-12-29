@@ -116,7 +116,7 @@ void FormationMgr::SetFormationSlot(Creature* creature)
             map->AddFormation(fData);
         }
 
-        fData->AddSlot(creature);
+        fData->AddSlot(creature, fData);
     }
 }
 
@@ -148,7 +148,7 @@ FormationDataSPtr FormationMgr::CreateDynamicFormation(Creature* creatureMaster,
         groupData->formationEntry = fEntry;
         fData = std::make_shared<FormationData>(groupData);
         creatureMaster->GetMap()->AddFormation(fData);
-        fData->AddSlot(creatureMaster);
+        fData->AddSlot(creatureMaster, fData);
     }
     return fData;
 }
@@ -166,7 +166,7 @@ bool FormationMgr::AddMemberToDynGroup(Creature* master, T* entity)
     if (!fData)
         return false;
 
-    fData->AddSlot(entity);
+    fData->AddSlot(entity, fData);
 
     return true;
 }
@@ -175,6 +175,11 @@ template bool FormationMgr::AddMemberToDynGroup<Player>(Creature*, Player*);
 
 void FormationMgr::Update(FormationDataMap& fDataMap)
 {
+}
+
+FormationData::~FormationData()
+{
+    sLog.outDebug("Deleting formation (%u)!!!!!", this->GetGroupEntryId());
 }
 
 void FormationData::SetFollowersMaster()
@@ -192,7 +197,6 @@ void FormationData::SetFollowersMaster()
             continue;
 
         auto follower = currentSlot->GetEntity();
-        uint32 lowGuid = follower->GetGUIDLow();
 
         if (follower && follower->IsAlive())
         {
@@ -273,13 +277,13 @@ void FormationData::ClearMoveGen()
     }
 }
 
-void FormationData::AddSlot(Creature* creature)
+void FormationData::AddSlot(Creature* creature, FormationDataSPtr& fData)
 {
     FormationSlotSPtr sData = nullptr;
     auto existingSlotItr = m_slotMap.find(creature->GetGUIDLow());
     if (existingSlotItr == m_slotMap.end())
     {
-        sData = FormationSlotSPtr(new FormationSlot(creature, this));
+        sData = std::make_shared<FormationSlot>(creature, fData);
         m_slotMap.emplace(creature->GetGUIDLow(), sData);
     }
     else
@@ -300,6 +304,7 @@ void FormationData::AddSlot(Creature* creature)
         m_formationEnabled = true;
         m_realMaster = creature;
         m_masterSlot = sData;
+        creature->GetRespawnCoord(m_spawnPos.x, m_spawnPos.y, m_spawnPos.z, nullptr, &m_spawnPos.radius);
 
         switch (creature->GetDefaultMovementType())
         {
@@ -322,7 +327,7 @@ void FormationData::AddSlot(Creature* creature)
     m_needToFixPositions = true;
 }
 
-void FormationData::AddSlot(Player* player)
+void FormationData::AddSlot(Player* player, FormationDataSPtr& fData)
 {
     if (!m_realMaster)
     {
@@ -334,7 +339,7 @@ void FormationData::AddSlot(Player* player)
     auto existingSlotItr = m_slotMap.find(player->GetGUIDLow());
     if (existingSlotItr == m_slotMap.end())
     {
-        sData = FormationSlotSPtr(new FormationSlot(player, this));
+        sData = FormationSlotSPtr(new FormationSlot(player, fData));
         m_slotMap.emplace(player->GetGUIDLow(), sData);
     }
     else
@@ -395,19 +400,11 @@ void FormationData::SetMasterMovement(Creature* newMaster)
     }
     else if (m_masterMotionType == MasterMotionType::FORMATION_TYPE_MASTER_RANDOM)
     {
-        float x, y, z, radius;
-        if (m_realMaster)
-            m_realMaster->GetRespawnCoord(x, y, z, nullptr, &radius);
-        else
-        {
-            auto cData = sObjectMgr.GetCreatureData(m_realMasterGuid);
-            x = cData->posX;
-            y = cData->posY;
-            z = cData->posZ;
-            radius = cData->spawndist;
-        }
-        newMaster->GetMotionMaster()->MoveRandomAroundPoint(x, y, z, radius);
+        newMaster->GetMotionMaster()->MoveRandomAroundPoint(m_spawnPos.x, m_spawnPos.y, m_spawnPos.z, m_spawnPos.radius);
     }
+
+    if (!m_realMaster)
+        m_realMaster = newMaster;
 
     m_masterSlot = newMasterSlot;
 }
@@ -442,14 +439,19 @@ bool FormationData::TrySetNewMaster(Creature* masterCandidat /*= nullptr*/)
         }
         return true;
     }
+    else
+    {
+        // we can remove this formation from memory
+        m_validFormation = false;
+    }
 
     return false;
 }
 
-void FormationData::Update(uint32 diff)
+bool FormationData::Update(uint32 diff)
 {
-    if (!m_realMaster)
-        return;
+    if (!m_realMaster && !TrySetNewMaster())
+        return m_validFormation;
 
     if (m_needToFixPositions)
     {
@@ -465,6 +467,7 @@ void FormationData::Update(uint32 diff)
         if (!master || !master->IsAlive())
             TrySetNewMaster();
     }
+    return m_validFormation;
 }
 
 void FormationData::Reset()
@@ -518,21 +521,30 @@ void FormationData::OnDeath(Creature* creature)
 
         m_masterCheck.Reset(5000);
     }
-
-//     auto slot = creature->GetFormationSlot();
-//     slot->SetCreature(nullptr);
 }
 
 void FormationData::OnEntityDelete(Unit* entity)
 {
-    auto& slot = entity->GetFormationSlot();
-
-    sLog.outString("Deleting creature from formation(%u)", GetFormationId());
-    if (slot->IsMasterSlot())
+    if (entity->IsCreature())
     {
-        OnMasterRemoved();
+        Creature* creature = static_cast<Creature*>(entity);
+        auto& slot = creature->GetFormationSlot();
+
+        sLog.outString("Deleting creature from formation(%u)", GetFormationId());
+        if (slot->IsMasterSlot())
+        {
+            OnMasterRemoved();
+            m_realMaster = nullptr;
+            m_masterSlot = nullptr;
+        }
+
+        if (creature->IsTemporarySummon())
+        {
+            m_slotMap.erase(creature->GetGUIDLow());
+            creature->RemoveFromFormation();
+        }
+        slot->m_entity = nullptr;
     }
-    slot->m_entity = nullptr;
 }
 
 // replace to either first available slot position or provided one
@@ -769,10 +781,15 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
 }
 
 // Slot base class responsible to keep track of an entity in the slow and its position relative to master
-FormationSlot::FormationSlot(Unit* _entity, FormationData* fData) :
-    m_entity(_entity), m_formationData(fData), m_recomputePosition(false),
-    m_angle(0), m_distance(0)
+FormationSlot::FormationSlot(Unit* _entity, FormationDataSPtr& fData) :
+    m_angle(0), m_distance(0), m_entityGuid(_entity->GetGUIDLow()), m_entity(_entity),
+    m_formationData(fData), m_recomputePosition(false)
 {
+}
+
+FormationSlot::~FormationSlot()
+{
+    sLog.outDebug("Deleting formation slot for guid(%u)!!!!!", this->GetDefaultGuid());
 }
 
 float FormationSlot::GetAngle() const
@@ -800,12 +817,12 @@ bool FormationSlot::IsMasterSlot() const
     return false;
 }
 
-CreatureFormationSlot::CreatureFormationSlot(Creature* _creature, FormationData* fData) :
+CreatureFormationSlot::CreatureFormationSlot(Creature* _creature, FormationDataSPtr& fData) :
     FormationSlot(_creature, fData), m_defaultGuid(_creature->GetGUIDLow())
 {
 }
 
-PlayerFormationSlot::PlayerFormationSlot(Player* _player, FormationData* fData) :
+PlayerFormationSlot::PlayerFormationSlot(Player* _player, FormationDataSPtr& fData) :
     FormationSlot(_player, fData), m_defaultGuid(_player->GetGUIDLow())
 {
 }

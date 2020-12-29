@@ -8894,7 +8894,10 @@ void Unit::RemoveFromWorld()
 void Unit::CleanupsBeforeDelete()
 {
     if (m_formationSlot)
-        m_formationSlot->GetFormationData()->OnEntityDelete(this);
+    {
+        auto& fData = m_formationSlot->GetFormationData();
+        fData->OnEntityDelete(this);
+    }
 
     if (m_uint32Values)                                     // only for fully created object
     {
