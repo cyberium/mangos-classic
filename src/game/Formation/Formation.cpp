@@ -36,8 +36,8 @@ INSTANTIATE_SINGLETON_1(FormationMgr);
 void FormationMgr::LoadGroupFormation()
 {
     sLog.outString("Loading group_formation...");
-    // fields indexes                             0             1              2                  3
-    const char* sqlFTRequest = "SELECT GroupGuid, FormationType, FormationSpread , FormationOptions from group_formation";
+    // fields indexes                           0                1                  2                    3
+    const char* sqlFTRequest = "SELECT `GroupGuid`, `FormationType`, `FormationSpread` , `FormationOptions` from `group_formation`";
     std::unique_ptr<QueryResult> formationTemplateQR(WorldDatabase.Query(sqlFTRequest));
     if (formationTemplateQR)
     {

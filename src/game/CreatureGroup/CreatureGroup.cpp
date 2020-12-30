@@ -81,8 +81,8 @@ void CreaturesGroupMgr::LoadGroupTemplates()
     sLog.outString("Loading group_template...");
     uint32 count = 0;
 
-    // fields indexes                            0     1
-    const char* sqlGTRequest = "SELECT group_entry, name from group_template";
+    // fields indexes                             0       1
+    const char* sqlGTRequest = "SELECT `group_entry`, `name` from `group_template`";
     std::unique_ptr<QueryResult> groupTemplateQR(WorldDatabase.Query(sqlGTRequest));
     if (groupTemplateQR)
     {
@@ -106,8 +106,8 @@ void CreaturesGroupMgr::LoadGroups()
 {
     sLog.outString("Loading groups...");
 
-    // fields indexes                           0            1        2
-    const char* sqlGMRequest = "SELECT group_guid, member_guid, slot_id FROM group_member ORDER BY group_guid, slot_id";
+    // fields indexes                            0              1          2
+    const char* sqlGMRequest = "SELECT `group_guid`, `member_guid`, `slot_id` FROM `group_member` ORDER BY `group_guid`, `slot_id`";
 
     uint32 count = 0;
     std::unique_ptr<QueryResult> groupMemberQR(WorldDatabase.Query(sqlGMRequest));
@@ -173,8 +173,8 @@ void CreaturesGroupMgr::LoadGroups()
         } while (groupMemberQR->NextRow());
     }
 
-    // fields indexes                            0            1
-    const char* sqlGrpRequest = "SELECT group_guid, group_entry from group_guid";
+    // fields indexes                             0              1
+    const char* sqlGrpRequest = "SELECT `group_guid`, `group_entry` from `group_guid`";
 
     count = 0;
     std::unique_ptr<QueryResult> groupQR(WorldDatabase.Query(sqlGrpRequest));
