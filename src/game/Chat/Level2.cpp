@@ -2870,6 +2870,7 @@ inline Creature* Helper_CreateWaypointFor(Creature* wpOwner, WaypointPathOrigin 
 
     // make them fly (need to confirm it work)
     settings.spawnDataEntry = 2;
+    settings.spawnType = TEMPSPAWN_TIMED_DESPAWN;
 
     Creature* wpCreature = WorldObject::SummonCreature(settings, wpOwner->GetMap());
 
