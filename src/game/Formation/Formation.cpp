@@ -336,7 +336,10 @@ void FormationData::AddSlot(Creature* creature, FormationDataSPtr& fData)
     if (creature->IsAlive())
         SetFollowersMaster();
 
-    m_needToFixPositions = true;
+    if (m_masterSlot)
+        FixSlotsPositions();
+    else
+        m_needToFixPositions = true;
 }
 
 void FormationData::AddSlot(Player* player, FormationDataSPtr& fData)
@@ -462,22 +465,24 @@ bool FormationData::TrySetNewMaster(Creature* masterCandidat /*= nullptr*/)
 
 bool FormationData::Update(uint32 diff)
 {
-    if (!m_formationEnabled)
-        return m_validFormation;
-
-    if (!m_realMaster && !TrySetNewMaster())
-        return m_validFormation;
-
-    if (m_needToFixPositions)
+    m_updateDelay.Update(diff);
+    if (m_updateDelay.Passed())
     {
-        FixSlotsPositions();
-        m_needToFixPositions = false;
-    }
+        m_updateDelay.Reset(2000);
 
-    m_masterCheck.Update(diff);
-    if (m_masterCheck.Passed())
-    {
-        m_masterCheck.Reset(2000);
+        if (!m_formationEnabled)
+            return m_validFormation;
+
+        // can happen when temp summon is master
+        if (!m_realMaster && !TrySetNewMaster())
+            return m_validFormation;
+
+        if (m_needToFixPositions)
+        {
+            FixSlotsPositions();
+            m_needToFixPositions = false;
+        }
+
         auto master = GetMaster();
         if (!master || !master->IsAlive())
             TrySetNewMaster();
@@ -534,7 +539,7 @@ void FormationData::OnDeath(Creature* creature)
         m_lastWP = creature->GetMotionMaster()->getLastReachedWaypoint();
         m_wpPathId = creature->GetMotionMaster()->GetPathId();
 
-        m_masterCheck.Reset(5000);
+        m_updateDelay.Reset(5000);
     }
 }
 

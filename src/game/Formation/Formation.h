@@ -63,10 +63,11 @@ class FormationData
 public:
     FormationData(CreaturesGroupEntrySPtr groupTableEntry) :
         m_groupTableEntry(groupTableEntry), m_currentFormationShape(groupTableEntry->formationEntry->formationType),
-        m_masterSlot(nullptr), m_formationEnabled(false), m_realMaster(nullptr), m_mirrorState(false),
-        m_keepCompact(false), m_validFormation(true), m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM),
-        m_masterCheck(0), m_lastWP(0), m_wpPathId(0),
-        m_realMasterGuid(groupTableEntry->masterSlot->defaultCreatureGuid)
+        m_masterSlot(nullptr), m_formationEnabled(false), m_mirrorState(false), m_needToFixPositions(false),
+        m_keepCompact(false), m_validFormation(true), m_lastWP(0), m_wpPathId(0), m_realMaster(nullptr),
+        m_realMasterGuid(groupTableEntry->masterSlot->defaultCreatureGuid),
+        m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM),
+        m_updateDelay(5000) // enforce first formation update 5 sec after spawning
     {}
     FormationData() = delete;
     ~FormationData();
@@ -113,7 +114,6 @@ private:
     bool TrySetNewMaster(Creature* masterCandidat = nullptr);
     CreaturesGroupEntrySPtr m_groupTableEntry;
     GroupFormationType m_currentFormationShape;
-    FormationSlotSPtr m_masterSlot;
     FormationSlotMap m_slotMap;
     bool m_formationEnabled;
     bool m_mirrorState;
@@ -123,13 +123,14 @@ private:
 
     uint32 m_lastWP;
     uint32 m_wpPathId;
-    uint32 m_realMasterGuid;
-    RespawnPosistion m_spawnPos;
-
     Creature* m_realMaster;
+    uint32 m_realMasterGuid;
 
     MasterMotionType m_masterMotionType;
-    ShortTimeTracker m_masterCheck;
+    ShortTimeTracker m_updateDelay;
+
+    FormationSlotSPtr m_masterSlot;
+    RespawnPosistion m_spawnPos;
 };
 
 struct FormationSlot
