@@ -63,7 +63,7 @@ class FormationData
 public:
     FormationData(CreaturesGroupEntrySPtr groupTableEntry) :
         m_groupTableEntry(groupTableEntry), m_currentFormationShape(groupTableEntry->formationEntry->formationType),
-        m_masterSlot(nullptr), m_formationEnabled(true), m_realMaster(nullptr), m_mirrorState(false),
+        m_masterSlot(nullptr), m_formationEnabled(false), m_realMaster(nullptr), m_mirrorState(false),
         m_keepCompact(false), m_validFormation(true), m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM),
         m_masterCheck(0), m_lastWP(0), m_wpPathId(0),
         m_realMasterGuid(groupTableEntry->masterSlot->defaultCreatureGuid)

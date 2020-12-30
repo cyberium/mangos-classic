@@ -107,7 +107,7 @@ void CreaturesGroupMgr::LoadGroups()
     sLog.outString("Loading groups...");
 
     // fields indexes                           0            1        2
-    const char* sqlGMRequest = "SELECT group_guid, member_guid, slot_id from group_member";
+    const char* sqlGMRequest = "SELECT group_guid, member_guid, slot_id FROM group_member ORDER BY group_guid, slot_id";
 
     uint32 count = 0;
     std::unique_ptr<QueryResult> groupMemberQR(WorldDatabase.Query(sqlGMRequest));

@@ -280,11 +280,20 @@ void FormationData::ClearMoveGen()
 void FormationData::AddSlot(Creature* creature, FormationDataSPtr& fData)
 {
     FormationSlotSPtr sData = nullptr;
+    uint32 slotId = m_slotMap.size();
+    if (!creature->IsTemporarySummon())
+    {
+        auto& slotInfos = fData->GetGroupTableEntry()->creatureSlot;
+        auto slotInfoItr = slotInfos.find(creature->GetGUIDLow());
+        if (slotInfoItr != slotInfos.end())
+            slotId = slotInfoItr->second->slotId;
+    }
+
     auto existingSlotItr = m_slotMap.find(creature->GetGUIDLow());
     if (existingSlotItr == m_slotMap.end())
     {
         sData = std::make_shared<FormationSlot>(creature, fData);
-        m_slotMap.emplace(creature->GetGUIDLow(), sData);
+        m_slotMap.emplace(slotId, sData);
     }
     else
     {
@@ -295,29 +304,32 @@ void FormationData::AddSlot(Creature* creature, FormationDataSPtr& fData)
     creature->SetFormationSlot(sData);
     creature->SetActiveObjectState(true);
 
-    sLog.outString("Slot filled by %s in formation(%u)", creature->GetGuidStr().c_str(), GetGroupGuid());
+    sLog.outString("Slot(%u) filled by %s in formation(%u)", slotId, creature->GetGuidStr().c_str(), GetGroupGuid());
 
     uint32 lowGuid = creature->GetGUIDLow();
 
     if (!m_realMaster)
     {
-        m_formationEnabled = true;
-        m_realMaster = creature;
-        m_masterSlot = sData;
-        creature->GetRespawnCoord(m_spawnPos.x, m_spawnPos.y, m_spawnPos.z, nullptr, &m_spawnPos.radius);
-
-        switch (creature->GetDefaultMovementType())
+        if (creature->IsTemporarySummon() || slotId == 0)
         {
-            case RANDOM_MOTION_TYPE:
-                m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_RANDOM;
-                break;
-            case WAYPOINT_MOTION_TYPE:
-                m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_WAYPOINT;
-                break;
-            default:
-                sLog.outError("FormationData::FillSlot> Master have not recognized default movement type for formation! Forced to random.");
-                m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_RANDOM;
-                break;
+            m_formationEnabled = true;
+            m_realMaster = creature;
+            m_masterSlot = sData;
+            creature->GetRespawnCoord(m_spawnPos.x, m_spawnPos.y, m_spawnPos.z, nullptr, &m_spawnPos.radius);
+
+            switch (creature->GetDefaultMovementType())
+            {
+                case RANDOM_MOTION_TYPE:
+                    m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_RANDOM;
+                    break;
+                case WAYPOINT_MOTION_TYPE:
+                    m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_WAYPOINT;
+                    break;
+                default:
+                    sLog.outError("FormationData::FillSlot> Master have not recognized default movement type for formation! Forced to random.");
+                    m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_RANDOM;
+                    break;
+            }
         }
     }
 
@@ -450,6 +462,9 @@ bool FormationData::TrySetNewMaster(Creature* masterCandidat /*= nullptr*/)
 
 bool FormationData::Update(uint32 diff)
 {
+    if (!m_formationEnabled)
+        return m_validFormation;
+
     if (!m_realMaster && !TrySetNewMaster())
         return m_validFormation;
 

@@ -47,7 +47,7 @@ typedef std::map<uint32, FormationEntrySPtr> FormationEntryMap;
 typedef std::shared_ptr<FormationData> FormationDataSPtr;
 typedef std::map<uint32, FormationDataSPtr> FormationDataMap;
 typedef std::shared_ptr<FormationSlot> FormationSlotSPtr;
-typedef std::unordered_map<uint32, FormationSlotSPtr> FormationSlotMap;
+typedef std::map<uint32, FormationSlotSPtr> FormationSlotMap;
 
 struct RespawnPosistion
 {
