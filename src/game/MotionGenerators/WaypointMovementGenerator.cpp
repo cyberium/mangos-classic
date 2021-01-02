@@ -479,6 +479,7 @@ void WaypointMovementGenerator<Creature>::SendNextWayPointPath(Creature& creatur
             settings.waypointId = i_currentNode;
             settings.spawnPathId = m_pathId;
             settings.pathOrigin = uint32(m_PathOrigin);
+            settings.spawnType = TEMPSPAWN_TIMED_DESPAWN;
 
             WorldObject::SummonCreature(settings, creature.GetMap());
         }
