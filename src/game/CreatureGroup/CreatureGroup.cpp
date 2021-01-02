@@ -145,7 +145,7 @@ void CreaturesGroupMgr::LoadGroups()
                 continue;
             }
 
-            auto linkInfo = sCreatureLinkingMgr.GetLinkedTriggerInformation(cData->id, memberGuid, cData->mapid);
+            auto linkInfo = sCreatureLinkingMgr.GetLinkedTriggerInformation(cData->id, 0, cData->mapid);
             if (linkInfo)
             {
                 sLog.outErrorDb("Creature guid(%u) have its entry(%u) in linked creature table that will not work with formation. Disabling Linking...", memberGuid, cData->id);

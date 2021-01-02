@@ -237,8 +237,8 @@ class FollowMovementGenerator : public TargetedMovementGeneratorMedium<Unit, Fol
         bool m_possess;
 };
 
-#define FORMATION_PATH_TIME_AHEAD 1600
-#define FORMATION_PATH_UPDATE FORMATION_PATH_TIME_AHEAD - 400
+// to be able to compute new path before the end of the current path (in milliseconds)
+#define FORMATION_FOLLOWERS_CHECK_OVERRIDE 400
 
 class FormationMovementGenerator : public FollowMovementGenerator
 {
@@ -263,7 +263,7 @@ protected:
 private:
     virtual void _setLocation(Unit& owner, bool catchup) override;
     bool GetPointAround(G3D::Vector3 const& originalPoint, G3D::Vector3& foundPos, float angle, float distance, bool isOnTheGround);
-    float BuildPath(Unit& owner, PointsArray& path, int32 timeAhead);
+    float BuildPath(Unit& owner, PointsArray& path);
     FormationSlotSPtr m_slot;
     uint32 m_formationId;
 };

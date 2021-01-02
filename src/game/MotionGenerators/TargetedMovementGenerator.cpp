@@ -1136,7 +1136,7 @@ bool FormationMovementGenerator::GetPointAround(G3D::Vector3 const& originalPoin
             if (std::abs(newZ - foundPos.z) < 4.0f)
                 foundPos.z = newZ + 0.2f;
         }
-        if (i_target->IsWithinLOS(foundPos.x, foundPos.y, foundPos.z))
+        if (i_target->IsWithinLOS(foundPos.x, foundPos.y, foundPos.z + 0.5f))
             done = true;
         else
             ++posCount;
@@ -1172,13 +1172,11 @@ bool FormationMovementGenerator::BuildReplacementPath(Unit& owner, PointsArray& 
     return done;
 }
 
-float FormationMovementGenerator::BuildPath(Unit& owner, PointsArray& path, int32 timeAhead)
+
+float FormationMovementGenerator::BuildPath(Unit& owner, PointsArray& path)
 {
     float speed = -1.0f;
-
     auto const& masterSpline = i_target->movespline;
-
-    uint32 lowGuid = owner.GetGUIDLow();
 
     float slotAngle = owner.GetFormationSlot()->GetAngle();
     float slotDist = owner.GetFormationSlot()->GetDistance();
@@ -1206,60 +1204,64 @@ float FormationMovementGenerator::BuildPath(Unit& owner, PointsArray& path, int3
     }
     else
     {
-        int32 destPathIdx = 0;
+        // guessed values from sniff and ingame check
+        float distAhead = (masterSpline->Speed() / 3.0f) * 4.0f;
+        float distGood = distAhead - (distAhead / 5);
+
         float slaveTravelDistance = 0;
-        path.emplace_back(owner.GetPositionX(), owner.GetPositionY(), owner.GetPositionZ());
-        int32 nearLastIndex = masterSpline->_Spline().last() > 2 ? masterSpline->_Spline().last() - 2 : masterSpline->_Spline().last();
+        Vector3 ownerPos(owner.GetPositionX(), owner.GetPositionY(), owner.GetPositionZ());
+        path.emplace_back(ownerPos);
+
+        int32 masterTravelTime = 0;
+        Vector3 masterPrevPoint(i_target->GetPositionX(), i_target->GetPositionY(), i_target->GetPositionZ());
+
+        float pathLen = 0;
         for (int32 pathIdx = masterSpline->GetRawPathIndex() + 1; pathIdx <= masterSpline->_Spline().last(); ++pathIdx)
         {
-            int32 currTravelTime = masterSpline->ComputeTimeToIndex(pathIdx);
+            float pathFactor = 1.0f;
+            Vector3 nextMasterDest = masterSpline->_Spline().getPoint(pathIdx);
 
-            // ignore points that are too near
-            if (currTravelTime < 100)
-                continue;
-
-            if (currTravelTime <= timeAhead || path.size() < 2)
+            float tDist = (masterPrevPoint - nextMasterDest).length();
+            if (tDist > distAhead)
             {
-                // next point in master movespline as base of new computation
-                Vector3 const& masterPoint = masterSpline->GetPoint(pathIdx);
+                // path is too long we have to reduce its size a bit
+                float missingDist = distAhead - slaveTravelDistance;
+                pathFactor = 1.0f / (tDist / missingDist);
+                nextMasterDest = masterPrevPoint.lerp(nextMasterDest, pathFactor);
+            }
 
-                // we have to compute new angle between two intermediate points
-                Vector3 direction = masterPoint - masterSpline->GetPoint(pathIdx - 1);
-                angle = atan2(direction.y, direction.x) + slotAngle;
+            // we have to compute new angle between two intermediate points
+            Vector3 direction = nextMasterDest - masterPrevPoint;
+            angle = atan2(direction.y, direction.x) + slotAngle;
 
-                bool done = false;
-                Vector3 nextPos;
-                done = GetPointAround(masterPoint, nextPos, angle, slotDist, isOnGround);
-
-                if (done)
+            Vector3 nextPos;
+            bool done = GetPointAround(nextMasterDest, nextPos, angle, slotDist, isOnGround);
+            if (done)
+            {
+                Vector3& prevSlavePos = path[path.size() - 1];
+                pathLen = (prevSlavePos - nextPos).length();
+                if (pathLen > 0.5f)
                 {
-                    float pathLen = (path[path.size() - 1] - nextPos).length();
-                    if (pathLen < 1)
-                    {
-                        // ignore too near points
-                        continue;
-                    }
-                    path.push_back(nextPos);
-
                     // compute lenght
                     slaveTravelDistance += pathLen;
 
-                    // set travel time
-                    destPathIdx = pathIdx;
-                }
-                else
-                {
-                    continue;
+                    // compute time (adjust with previously computed factor)
+                    int32 nextPointTime = masterSpline->ComputeTimeToIndex(pathIdx) - masterTravelTime;
+                    masterTravelTime = masterTravelTime + (nextPointTime * pathFactor);
+
+                    // time and lenght are added properly we can then push the next position for the follower
+                    path.push_back(nextPos);
                 }
             }
-            else
+
+            if (slaveTravelDistance > distGood)
                 break;
+            masterPrevPoint = nextMasterDest;
         }
 
         if (slaveTravelDistance > 0.1f)
         {
             // Speed computation
-            int32 masterTravelTime = masterSpline->ComputeTimeToIndex(destPathIdx);
             float masterSpeed = masterSpline->Speed();
 
             // define some factor that will influence slave speed to smooth its movement
@@ -1297,7 +1299,7 @@ void FormationMovementGenerator::HandleTargetedMovement(Unit& owner, const uint3
 
         if (i_recheckDistance.Passed())
         {
-            i_recheckDistance.Reset(FORMATION_PATH_UPDATE);
+            i_recheckDistance.Reset(1000);
 
             G3D::Vector3 currentTargetPos;
 
@@ -1341,7 +1343,7 @@ void FormationMovementGenerator::_setLocation(Unit& owner, bool needRepos)
     }
     else
     {
-        speed = BuildPath(owner, newPath, FORMATION_PATH_TIME_AHEAD);
+        speed = BuildPath(owner, newPath);
 
         if (speed < 1.0f)
             return;
@@ -1361,7 +1363,7 @@ void FormationMovementGenerator::_setLocation(Unit& owner, bool needRepos)
         init.SetVelocity(speed);
     }
 
-    int32 nextUpdate = init.Launch() - 100;
+    int32 nextUpdate = init.Launch() - FORMATION_FOLLOWERS_CHECK_OVERRIDE;
     if (nextUpdate < 0)
         nextUpdate = 0;
 
