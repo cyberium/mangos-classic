@@ -107,7 +107,11 @@ void FormationMgr::SetFormationSlot(Creature* creature)
         if (!slot)
             return;
 
+        if (!groupData->formationEntry)
+            return;
+
         sLog.outString("Setting formation slot for %s", creature->GetGuidStr().c_str());
+
         auto fData = map->GetFormationData(groupData);
 
         if (!fData)
