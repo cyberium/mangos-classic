@@ -21,6 +21,7 @@
 
 #include "Common.h"
 #include "CreatureGroupDefs.h"
+#include "Formation/Formation.h"
 
 class CreaturesGroupMgr
 {
@@ -32,29 +33,111 @@ public:
     void Initialize();
     CreaturesGroupEntrySPtr GetEntryByCreatureGuid(uint32 guid, uint32 map)
     {
-        auto& result = m_groupsData[map].find(guid);
-        if (result != m_groupsData[map].end())
+        auto& result = m_staticGroupsData[map].find(guid);
+        if (result != m_staticGroupsData[map].end())
             return result->second;
         return nullptr;
     }
     CreaturesGroupEntrySPtr GetEntryByGroupGuid(uint32 groupGuid)
     {
-        auto& result = m_groupGuids.find(groupGuid);
-        if (result != m_groupGuids.end())
+        auto& result = m_staticGroupGuids.find(groupGuid);
+        if (result != m_staticGroupGuids.end())
             return result->second;
         return nullptr;
     }
 
-    CreaturesGroupEntrySPtr AddDynamicGroup(Creature* creatureMaster);
+    void SetGroupSlot(Creature* creature);
+    CreaturesGroupDataSPtr AddDynamicGroup(Creature* creatureMaster);
 
 private:
     GroupTemplateEntryMap m_groupTemplateEntries;
-    CreaturesGroupEntryMap m_groupGuids;
-    CreatureGroupMap m_groupsData;
+    CreaturesGroupEntryMap m_staticGroupGuids;
+    CreatureGroupStaticMap m_staticGroupsData;
     uint32 m_groupEntryGuidCounter;
 
     void LoadGroupTemplates();
     void LoadGroups();
+};
+
+// used to store data of loaded group.
+class CreaturesGroupData
+{
+public:
+    CreaturesGroupData(CreaturesGroupEntrySPtr& _groupEntry, FormationDataSPtr fData = nullptr) :
+        gEntry(_groupEntry), guid(_groupEntry->guid), formationData(fData), masterSlot(nullptr), isDynamic(false) {}
+
+    CreaturesGroupData(uint32 _guid) :
+        guid(_guid), gEntry(nullptr), formationData(nullptr), masterSlot(nullptr), isDynamic(true) {}
+
+    CreaturesGroupData() = delete;
+
+    bool Update(uint32 diff);
+
+    CreatureGroupSlotSPtr GetFirstFreeSlot(uint32 guid);
+    CreatureGroupSlotSPtr GetFirstAliveSlot();
+    CreatureGroupSlotSPtr GetSlotByGuid(uint32 guid)
+    {
+        auto& result = creatureSlots.find(guid);
+        if (result != creatureSlots.end())
+            return result->second;
+
+        return nullptr;
+    }
+
+    void OnRespawn(Creature* creature);
+    void OnDeath(Creature* creature);
+    void OnEntityDelete(Unit* entity);
+
+    uint32 guid;
+    CreaturesGroupEntrySPtr gEntry;
+    FormationDataSPtr formationData;
+    CreatureGroupSlotSPtr masterSlot;
+    CreatureGroupSlotMap creatureSlots;
+
+    bool isDynamic;
+};
+
+// used to store dynamic data of individual slot
+class CreatureGroupSlot
+{
+friend class CreaturesGroupData;
+friend class CreaturesGroupMgr;
+public:
+    CreatureGroupSlot(CreaturesGroupDataSPtr& groupData, CreatureGroupSlotEntrySPtr& slotEntry, FormationSlotDataSPtr fSlotInfo = nullptr) :
+        m_gData(groupData), m_currentGuid(slotEntry->defaultCreatureGuid), m_slotId(slotEntry->slotId),
+        m_entity(nullptr), m_formationSlotInfo(fSlotInfo) {}
+
+    CreatureGroupSlot(uint32 slotId, uint32 creatureGuid, CreaturesGroupDataSPtr& gData) :
+        m_slotId(slotId), m_currentGuid(creatureGuid), m_gData(gData), m_entity(nullptr),
+        m_formationSlotInfo(nullptr) {}
+
+    uint32 GetCurrentGuid() const { return m_currentGuid; }
+    uint32 GetSlotId() const { return m_slotId; }
+
+    bool IsFormationMaster() const;
+
+    Unit* GetMaster() { return m_gData->formationData ? m_gData->formationData->GetMaster() : nullptr; };
+
+    CreaturesGroupDataSPtr GetGroupData() { return m_gData; };
+
+    FormationDataSPtr GetFormationData() { return m_gData->formationData; }
+    FormationSlotDataSPtr GetFoormationSlotData() { return m_formationSlotInfo; }
+
+    // important for MovGen
+    float GetDistance() const { return m_gData->formationData->GetDistance(); }
+    float GetAngle() const;
+    Unit* GetEntity() { return m_entity; }
+    void SetNewPositionRequired() { m_formationSlotInfo->recomputePosition = true; }
+    bool NewPositionRequired();
+
+private:
+    CreaturesGroupDataSPtr m_gData;
+    uint32 m_currentGuid;
+    uint32 m_slotId;
+
+    Unit* m_entity;
+
+    FormationSlotDataSPtr m_formationSlotInfo;
 };
 
 #define sCreatureGroupMgr MaNGOS::Singleton<CreaturesGroupMgr>::Instance()

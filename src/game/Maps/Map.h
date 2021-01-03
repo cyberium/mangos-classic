@@ -335,10 +335,10 @@ class Map : public GridRefManager<NGridType>
         void RemoveTransport(Transport* transport);
 
         // formation data
-        FormationDataSPtr GetFormationData(CreaturesGroupEntrySPtr& grpEntry);
-        bool AddFormation(FormationDataSPtr& fData);
-        CreaturesGroupEntrySPtr GetGroupData(uint32 guid);
-        void AddGroupData(CreaturesGroupEntrySPtr& gEntry, uint32 guid);
+        //FormationDataSPtr GetFormationData(CreaturesGroupEntrySPtr& grpEntry);
+        //bool AddFormation(FormationDataSPtr& fData);
+        CreaturesGroupDataSPtr GetGroupData(uint32 guid);
+        void AddGroupData(CreaturesGroupDataSPtr& gEntry, uint32 guid);
 
 
     private:
@@ -446,9 +446,8 @@ class Map : public GridRefManager<NGridType>
 
         std::unordered_map<uint32, std::set<ObjectGuid>> m_spawnedCount;
 
-        // Formations data
-        FormationDataMap m_formationData;
-        CreaturesGroupEntryMap m_groupData;
+        // Creature group data
+        CreaturesGroupMap m_groupData;
 };
 
 class WorldMap : public Map

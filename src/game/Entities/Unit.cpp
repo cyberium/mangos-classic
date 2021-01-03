@@ -323,7 +323,7 @@ Unit::Unit() :
     m_auraUpdateMask(0),
     m_ignoreRangedTargets(false),
     m_combatManager(this),
-    m_formationSlot(nullptr)
+    m_creatureGroupSlot(nullptr)
 {
     m_objectType |= TYPEMASK_UNIT;
     m_objectTypeId = TYPEID_UNIT;
@@ -8893,10 +8893,10 @@ void Unit::RemoveFromWorld()
 
 void Unit::CleanupsBeforeDelete()
 {
-    if (m_formationSlot)
+    if (m_creatureGroupSlot)
     {
-        auto& fData = m_formationSlot->GetFormationData();
-        fData->OnEntityDelete(this);
+        auto& gData = m_creatureGroupSlot->GetGroupData();
+        gData->OnEntityDelete(this);
     }
 
     if (m_uint32Values)                                     // only for fully created object

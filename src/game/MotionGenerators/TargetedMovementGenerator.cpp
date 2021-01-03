@@ -1159,8 +1159,8 @@ bool FormationMovementGenerator::BuildReplacementPath(Unit& owner, PointsArray& 
     Vector3 nextPos;
     bool done = false;
     uint32 posCount = 0;
-    float slotAngle = owner.GetFormationSlot()->GetAngle();
-    float slotDist = owner.GetFormationSlot()->GetDistance();
+    float slotAngle = owner.GetGroupSlot()->GetAngle();
+    float slotDist = owner.GetGroupSlot()->GetDistance();
     float angle = i_target->GetOrientation() + slotAngle;
 
     done = GetPointAround(masterPos, nextPos, angle, slotDist, isOnGround);
@@ -1178,8 +1178,8 @@ float FormationMovementGenerator::BuildPath(Unit& owner, PointsArray& path)
     float speed = -1.0f;
     auto const& masterSpline = i_target->movespline;
 
-    float slotAngle = owner.GetFormationSlot()->GetAngle();
-    float slotDist = owner.GetFormationSlot()->GetDistance();
+    float slotAngle = owner.GetGroupSlot()->GetAngle();
+    float slotDist = owner.GetGroupSlot()->GetDistance();
     float angle = i_target->GetOrientation();
     bool isOnGround = !owner.IsFlying() && !owner.IsSwimming() && !owner.isHover();
 
@@ -1311,7 +1311,7 @@ void FormationMovementGenerator::HandleTargetedMovement(Unit& owner, const uint3
         }
     }
 
-    if (owner.GetFormationSlot()->NewPositionRequired() && i_target->movespline->Finalized())
+    if (owner.GetGroupSlot()->NewPositionRequired() && i_target->movespline->Finalized())
     {
         needToRePos = true;
     }

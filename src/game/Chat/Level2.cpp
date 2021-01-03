@@ -2294,17 +2294,19 @@ bool ChatHandler::HandleNpcFormationInfoCommand(char* /*args*/)
         return false;
     }
 
-    auto currSlot = creature->GetFormationSlot();
-    if (!currSlot)
+    auto currSlot = creature->GetGroupSlot();
+    if (!currSlot || !currSlot->GetFormationData())
     {
         SendSysMessage("Creature is not in formation");
         return true;
     }
 
-    PSendSysMessage("Creature is in group id(%u) with formation template(%u)",
-        currSlot->GetFormationData()->GetGroupGuid(), currSlot->GetFormationData()->GetFormationId());
+    auto& fData = currSlot->GetFormationData();
+    auto& gData = currSlot->GetGroupData();
 
-    auto slotMap = currSlot->GetFormationData()->GetSlots();
+    PSendSysMessage("Creature is in group id(%u) and in formation", gData->guid);
+
+    auto& slotMap = gData->creatureSlots;
     if (slotMap.size() > 1)
     {
         SendSysMessage("Following creatures are part of the formation");
@@ -2325,7 +2327,7 @@ bool ChatHandler::HandleNpcFormationInfoCommand(char* /*args*/)
             else
                 cinfo << "not filled";
 
-            cinfo << " default guid is " << slot->GetDefaultGuid();
+            cinfo << " default guid is " << slot->GetCurrentGuid();
 
             uint32 angle = uint32(slot->GetAngle() * (180 / M_PI_F));
 
@@ -2350,8 +2352,8 @@ bool ChatHandler::HandleNpcFormationResetCommand(char* /*args*/)
         return false;
     }
 
-    auto currSlot = creature->GetFormationSlot();
-    if (!currSlot)
+    auto currSlot = creature->GetGroupSlot();
+    if (!currSlot || !currSlot->GetFormationData())
     {
         SendSysMessage("Creature is not in formation");
         return true;
@@ -2376,8 +2378,8 @@ bool ChatHandler::HandleNpcFormationSwitchCommand(char* args)
         return false;
     }
 
-    auto currSlot = creature->GetFormationSlot();
-    if (!currSlot)
+    auto currSlot = creature->GetGroupSlot();
+    if (!currSlot || !currSlot->GetFormationData())
     {
         SendSysMessage("Creature is not in formation");
         return true;
@@ -2407,8 +2409,8 @@ bool ChatHandler::HandleNpcFormationSetMasterCommand(char* args)
         return false;
     }
 
-    auto currSlot = creature->GetFormationSlot();
-    if (!currSlot)
+    auto currSlot = creature->GetGroupSlot();
+    if (!currSlot || !currSlot->GetFormationData())
     {
         SendSysMessage("Creature is not in formation");
         return true;
@@ -2431,8 +2433,8 @@ bool ChatHandler::HandleNpcFormationCompactCommand(char* args)
         return false;
     }
 
-    auto currSlot = creature->GetFormationSlot();
-    if (!currSlot)
+    auto currSlot = creature->GetGroupSlot();
+    if (!currSlot || !currSlot->GetFormationData())
     {
         SendSysMessage("Creature is not in formation");
         return true;
@@ -2455,7 +2457,7 @@ bool ChatHandler::HandleNpcFormationAddCommand(char* args)
     }
 
     uint32 masterGuid = 0;
-    !ExtractUInt32(&args, masterGuid);
+    ExtractUInt32(&args, masterGuid);
 
     // TODO::should definitively change that lookup method!!!!
     // Get all creatures in 100y radius
@@ -2483,7 +2485,7 @@ bool ChatHandler::HandleNpcFormationAddCommand(char* args)
         {
             if (target != creature)
             {
-                if (target->GetFormationSlot() && target->GetFormationSlot()->IsMasterSlot())
+                if (target->GetGroupSlot() && target->GetGroupSlot()->IsFormationMaster())
                 {
                     if (nearestMaster)
                     {
@@ -2514,21 +2516,21 @@ bool ChatHandler::HandleNpcFormationAddCommand(char* args)
         master = nearestMaster;
     }
 
-    auto masterSlot = master->GetFormationSlot();
-    if (!masterSlot)
+    auto masterSlot = creature->GetGroupSlot();
+    if (!masterSlot || !masterSlot->GetFormationData())
     {
         SendSysMessage("Provided guid for master is not in formation!");
         return true;
     }
 
-    if (!masterSlot->IsMasterSlot())
+    if (!masterSlot->IsFormationMaster())
     {
         SendSysMessage("Provided guid is not the master in its formation!");
         return true;
     }
 
-    auto currSlot = creature->GetFormationSlot();
-    if (currSlot)
+    auto currSlot = creature->GetGroupSlot();
+    if (!currSlot || !currSlot->GetFormationData())
     {
         SendSysMessage("Creature is already in formation");
         return true;
@@ -2550,8 +2552,8 @@ bool ChatHandler::HandleNpcFormationCreateCommand(char* args)
         return false;
     }
 
-    auto currSlot = creature->GetFormationSlot();
-    if (currSlot)
+    auto currSlot = creature->GetGroupSlot();
+    if (!currSlot || !currSlot->GetFormationData())
     {
         SendSysMessage("Creature is already in formation");
         return true;

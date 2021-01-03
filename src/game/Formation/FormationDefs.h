@@ -23,7 +23,7 @@
 #include "CreatureGroup/CreatureGroupDefs.h"
 
 struct FormationEntry;
-struct FormationSlot;
+struct FormationSlotData;
 class FormationMgr;
 class Creature;
 class FormationData;
@@ -46,8 +46,7 @@ typedef std::shared_ptr<FormationEntry> FormationEntrySPtr;
 typedef std::map<uint32, FormationEntrySPtr> FormationEntryMap;
 typedef std::shared_ptr<FormationData> FormationDataSPtr;
 typedef std::map<uint32, FormationDataSPtr> FormationDataMap;
-typedef std::shared_ptr<FormationSlot> FormationSlotSPtr;
-typedef std::map<uint32, FormationSlotSPtr> FormationSlotMap;
+typedef std::shared_ptr<FormationSlotData> FormationSlotDataSPtr;
 
 struct RespawnPosistion
 {
@@ -59,11 +58,18 @@ struct FormationEntry
     uint32 formationId;
     GroupFormationType formationType;
     uint32 options;
-    bool dynamic;
     float distance;
     CreaturesGroupEntrySPtr groupTableEntry;
+};
 
-    FormationSlotEntryMap slots;
+struct FormationSlotData
+{
+    FormationSlotData() : angle(0), distance(1), recomputePosition(true) {}
+    FormationSlotData(float _angle, float _distance = 1) : angle(_angle), distance(_distance), recomputePosition(true) {}
+
+    float angle;
+    float distance;
+    bool recomputePosition;
 };
 
 #endif

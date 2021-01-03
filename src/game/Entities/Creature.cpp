@@ -650,11 +650,11 @@ void Creature::Update(const uint32 diff)
                 if (m_isCreatureLinkingTrigger)
                     GetMap()->GetCreatureLinkingHolder()->DoCreatureLinkingEvent(LINKING_EVENT_RESPAWN, this);
 
-                if (m_formationSlot)
+                if (m_creatureGroupSlot)
                 {
                     if (uint16 poolid = sPoolMgr.IsPartOfAPool<Creature>(GetGUIDLow()))
                         sLog.outString("Error!!!");
-                    m_formationSlot->GetFormationData()->OnRespawn(this);
+                    m_creatureGroupSlot->GetGroupData()->OnRespawn(this);
                 }
 
                 GetMap()->Add(this);
@@ -1549,7 +1549,7 @@ bool Creature::LoadFromDB(uint32 dbGuid, Map* map, uint32 newGuid, GenericTransp
 
     AIM_Initialize();
 
-    sFormationMgr.SetFormationSlot(this);
+    sCreatureGroupMgr.SetGroupSlot(this);
 
     // Creature Linking, Initial load is handled like respawn
     if (m_isCreatureLinkingTrigger && IsAlive())
@@ -1666,8 +1666,8 @@ void Creature::SetDeathState(DeathState s)
 {
     if ((s == JUST_DIED && !m_isDeadByDefault) || (s == JUST_ALIVED && m_isDeadByDefault))
     {
-        if (m_formationSlot)
-            m_formationSlot->GetFormationData()->OnDeath(this);
+        if (m_creatureGroupSlot)
+            m_creatureGroupSlot->GetGroupData()->OnDeath(this);
 
         if (!m_respawnOverriden)
         {

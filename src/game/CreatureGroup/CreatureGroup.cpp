@@ -21,6 +21,7 @@
 #include "Database/Database.h"
 #include "Policies/Singleton.h"
 #include "Entities/Creature.h"
+#include "Formation/Formation.h"
 
 INSTANTIATE_SINGLETON_1(CreaturesGroupMgr);
 
@@ -30,10 +31,59 @@ void CreaturesGroupMgr::Initialize()
     LoadGroups();
 }
 
-CreaturesGroupEntrySPtr CreaturesGroupMgr::AddDynamicGroup(Creature* creatureMaster)
+void CreaturesGroupMgr::SetGroupSlot(Creature* creature)
+{
+    Map* map = creature->GetMap();
+    auto& groupDataEntry = GetEntryByCreatureGuid(creature->GetGUIDLow(), map->GetId());
+    if (groupDataEntry)
+    {
+        CreatureGroupSlotEntrySPtr slot = groupDataEntry->GetSlotEntryByGuid(creature->GetGUIDLow());
+        if (!slot)
+            return;
+
+        // check if group doesn't already exist
+        CreaturesGroupDataSPtr gData = map->GetGroupData(groupDataEntry->guid);
+        if (!gData)
+        {
+            // create new group data
+            gData = std::make_shared<CreaturesGroupData>(groupDataEntry);
+            map->AddGroupData(gData, groupDataEntry->guid);
+        }
+
+        // create formation
+        if (groupDataEntry->formationEntry)
+        {
+            // create FormationData class if doesn't already exist
+            if (!gData->formationData)
+            {
+                auto fData = std::make_shared<FormationData>(gData, groupDataEntry->formationEntry);
+                gData->formationData = fData;
+            }
+
+            // we can reserve some more memory space for formation specific slot data
+            auto formationSlotData = std::make_shared<FormationSlotData>();
+
+            // slots creation
+            auto & slotMap = gData->creatureSlots;
+            auto slotEmplItr = slotMap.emplace(creature->GetGUIDLow(), new CreatureGroupSlot(gData, slot, formationSlotData));
+            auto& newSlot = slotEmplItr.first->second;
+
+            newSlot->m_entity = creature;
+            creature->SetGroupSlot(newSlot);
+
+            // prepare creature for formation
+            gData->formationData->OnSlotAdded(creature);
+        }
+    }
+}
+
+CreaturesGroupDataSPtr CreaturesGroupMgr::AddDynamicGroup(Creature* creatureMaster)
 {
     // first check if creature is valid and in a map
     if (!creatureMaster || !creatureMaster->GetMap())
+        return nullptr;
+
+    if (creatureMaster->GetGroupSlot())
         return nullptr;
 
     // base data
@@ -50,30 +100,20 @@ CreaturesGroupEntrySPtr CreaturesGroupMgr::AddDynamicGroup(Creature* creatureMas
         return result;
     }
 
-    // search for special entry 0 for all dynamics groups
-    auto gEntryItr = m_groupTemplateEntries.find(0);
-    if (gEntryItr == m_groupTemplateEntries.end())
-    {
-        // create special template for dynamic groups
-        auto templItr = m_groupTemplateEntries.emplace(0, new CreraturesGroupTemplateEntry(0, "Dynamic group"));
-        gEntryItr = templItr.first;
-    }
-
-    CreaturesGroupEntrySPtr gEntry = CreaturesGroupEntrySPtr(new CreaturesGroupEntry(newGroupGuid, gEntryItr->second, nullptr));
+    // create new group data
+    CreaturesGroupDataSPtr gData = std::make_shared<CreaturesGroupData>(newGroupGuid);
 
     // slots creation
-    CreatureGroupSlotMapSPtr slotMap = CreatureGroupSlotMapSPtr(new CreatureGroupSlotMap());
-    auto slotEmplItr = slotMap->emplace(masterGuid, new CreatureGroupSlotEntry(slotId, masterGuid, gEntry));
+    auto& slotMap = gData->creatureSlots;
+    auto slotEmplItr = slotMap.emplace(masterGuid, new CreatureGroupSlot(slotId, masterGuid, gData));
 
     // set it as master slot
-    gEntry->masterSlot = slotEmplItr.first->second;
+    gData->masterSlot = slotEmplItr.first->second;
 
     // add it to map data store
-    creatureMaster->GetMap()->AddGroupData(gEntry, masterGuid);
+    creatureMaster->GetMap()->AddGroupData(gData, masterGuid);
 
-    // add it to guid lookup table
-    m_groupGuids.emplace(newGroupGuid, gEntry);
-    return gEntry;
+    return gData;
 }
 
 void CreaturesGroupMgr::LoadGroupTemplates()
@@ -195,8 +235,8 @@ void CreaturesGroupMgr::LoadGroups()
                 continue;
             }
 
-            auto grpGuidItr = m_groupGuids.find(groupGuid);
-            if (grpGuidItr == m_groupGuids.end())
+            auto grpGuidItr = m_staticGroupGuids.find(groupGuid);
+            if (grpGuidItr == m_staticGroupGuids.end())
             {
                 auto groupTemplateItr = m_groupTemplateEntries.find(groupEntryId);
                 if (groupTemplateItr == m_groupTemplateEntries.end())
@@ -251,7 +291,7 @@ void CreaturesGroupMgr::LoadGroups()
                 CreaturesGroupEntrySPtr gEntry = CreaturesGroupEntrySPtr(new CreaturesGroupEntry(groupGuid, groupEntry, nullptr));
 
                 // slots creation
-                CreatureGroupSlotMap& slotMap = gEntry->creatureSlot;
+                CreatureGroupStaticSlotMap& slotMap = gEntry->creatureSlots;
                 for (auto itr = bounds.first; itr != bounds.second; ++itr)
                 {
                     auto& memberGuid = std::get<0>(itr->second);
@@ -262,10 +302,10 @@ void CreaturesGroupMgr::LoadGroups()
                     if (slotId == 0)
                         gEntry->masterSlot = slotMap[memberGuid];
 
-                    m_groupsData[currentMap].emplace(memberGuid, gEntry);
+                    m_staticGroupsData[currentMap].emplace(memberGuid, gEntry);
                 }
 
-                m_groupGuids.emplace(groupGuid, gEntry);
+                m_staticGroupGuids.emplace(groupGuid, gEntry);
                 ++count;
             }
 
@@ -274,4 +314,101 @@ void CreaturesGroupMgr::LoadGroups()
 
     sLog.outString(">> Loaded %u group members", count);
     sLog.outString();
+}
+
+bool CreaturesGroupData::Update(uint32 diff)
+{
+    if (formationData)
+    {
+        if (!formationData->Update(diff))
+            formationData = nullptr;
+    }
+    return true;
+}
+
+CreatureGroupSlotSPtr CreaturesGroupData::GetFirstFreeSlot(uint32 guid)
+{
+    for (auto& slotItr : creatureSlots)
+    {
+        auto& slot = slotItr.second;
+
+        Unit* slotUnit = slot->GetEntity();
+        if (!slotUnit || !slotUnit->IsAlive() || (slotUnit->GetGUIDLow() == guid && !slotUnit->IsPlayer()))
+            return slot;
+    }
+    return nullptr;
+}
+
+CreatureGroupSlotSPtr CreaturesGroupData::GetFirstAliveSlot()
+{
+    for (auto& slotItr : creatureSlots)
+    {
+        auto& slot = slotItr.second;
+
+        Unit* slotUnit = slot->GetEntity();
+        if (slotUnit && slotUnit->IsAlive())
+            return slot;
+    }
+    return nullptr;
+}
+
+void CreaturesGroupData::OnRespawn(Creature* creature)
+{
+    if (formationData)
+        formationData->OnRespawn(creature);
+}
+
+void CreaturesGroupData::OnDeath(Creature* creature)
+{
+    if (formationData)
+        formationData->OnDeath(creature);
+}
+
+void CreaturesGroupData::OnEntityDelete(Unit* entity)
+{
+    if (formationData)
+         formationData->OnEntityDelete(entity);
+
+    if (entity->IsCreature())
+    {
+        Creature* creature = static_cast<Creature*>(entity);
+        auto& slot = creature->GetGroupSlot();
+
+        sLog.outString("Deleting creature from Group(%u)", guid);
+
+        if (creature->IsTemporarySummon())
+        {
+            creatureSlots.erase(creature->GetGUIDLow());
+        }
+        slot->m_entity = nullptr;
+    }
+}
+
+bool CreatureGroupSlot::IsFormationMaster() const
+{
+    if (!m_gData->formationData)
+        return false;
+
+    auto& masterSlot = m_gData->formationData->GetMasterSlot();
+    if (!masterSlot || !masterSlot->GetEntity() || masterSlot->GetEntity()->GetGUIDLow() != m_currentGuid)
+        return false;
+
+    return true;
+}
+
+float CreatureGroupSlot::GetAngle() const
+{
+    if (!m_gData->formationData->GetMirrorState())
+        return m_formationSlotInfo->angle;
+
+    return (2 * M_PI_F) - m_formationSlotInfo->angle;
+}
+
+bool CreatureGroupSlot::NewPositionRequired()
+{
+    if (!m_formationSlotInfo || !m_formationSlotInfo->recomputePosition)
+        return false;
+
+    m_formationSlotInfo->recomputePosition = false;
+    return true;
 }

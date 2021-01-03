@@ -743,14 +743,14 @@ void Map::Update(const uint32& t_diff)
     meas.add_field("count", std::to_string(static_cast<int32>(count)));
 
     // update formations and delete invalid one (no creatures loaded)
-    for (auto fItr = m_formationData.cbegin(), nextItr = fItr; fItr != m_formationData.cend(); fItr = nextItr)
+    for (auto fItr = m_groupData.cbegin(), nextItr = fItr; fItr != m_groupData.cend(); fItr = nextItr)
     {
         ++nextItr;
         if (!fItr->second->Update(t_diff))
         {
-            sLog.outDebug("Map::Update> Deleting formation id(%u)", fItr->second->GetFormationId());
+            sLog.outDebug("Map::Update> Deleting formation id(%u)", fItr->second->guid);
             // remove unused formation data
-            m_formationData.erase(fItr);
+            m_groupData.erase(fItr);
         }
     }
 
@@ -2570,6 +2570,7 @@ void Map::RemoveFromSpawnCount(const ObjectGuid& guid)
     m_spawnedCount[guid.GetEntry()].erase(guid);
 }
 
+/*
 FormationDataSPtr Map::GetFormationData(CreaturesGroupEntrySPtr& grpEntry)
 {
     FormationDataSPtr fData = nullptr;
@@ -2594,9 +2595,9 @@ bool Map::AddFormation(FormationDataSPtr& fData)
         return false;
     }
     return true;
-}
+}*/
 
-CreaturesGroupEntrySPtr Map::GetGroupData(uint32 guid)
+CreaturesGroupDataSPtr Map::GetGroupData(uint32 guid)
 {
     auto dataItr = m_groupData.find(guid);
     if (dataItr != m_groupData.end())
@@ -2604,7 +2605,7 @@ CreaturesGroupEntrySPtr Map::GetGroupData(uint32 guid)
     return nullptr;
 }
 
-void Map::AddGroupData(CreaturesGroupEntrySPtr& gEntry, uint32 guid)
+void Map::AddGroupData(CreaturesGroupDataSPtr& gEntry, uint32 guid)
 {
     auto dataItr = m_groupData.find(guid);
     if (dataItr == m_groupData.end())

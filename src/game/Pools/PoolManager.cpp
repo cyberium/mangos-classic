@@ -316,7 +316,7 @@ void PoolGroup<Creature>::Despawn1Object(MapPersistentState& mapState, uint32 gu
 
             if (creature)
             {
-                if (creature->GetFormationSlot())
+                if (creature->GetGroupSlot())
                 {
                     // error should not be possible!
                     sLog.outError("Error! Pool system trying to remove from grid a grouped creature(%s) with poolId(%u)!", creature->GetGuidStr().c_str(), poolId);

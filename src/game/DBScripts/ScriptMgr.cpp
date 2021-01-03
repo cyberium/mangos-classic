@@ -2426,8 +2426,8 @@ bool ScriptAction::HandleScriptStep()
 
             Creature* creature = static_cast<Creature*>(pSource);
 
-            auto currSlot = creature->GetFormationSlot();
-            if (!currSlot)
+            auto currSlot = creature->GetGroupSlot();
+            if (!currSlot || !currSlot->GetFormationData())
             {
                 sLog.outErrorDb(" DB-SCRIPTS: Process table `%s` id %u, command %u failed. %s in not in formation!", m_table, m_script->id, m_script->command, creature->GetGuidStr().c_str());
                 return true;

@@ -20,17 +20,20 @@
 #define CMANGOS_CREATURE_GROUP_DEFS_H
 
 #include "Common.h"
+#include "Formation/FormationDefs.h"
 
 const uint32 CREATURE_GROUP_FIRST_DYNAMIC_GUID = 0x01FFFFFF;
 
 // Needed forward declaration
-struct FormationEntry;
 struct CreraturesGroupTemplateEntry;
 struct CreaturesGroupEntry;
 struct CreatureGroupSlotEntry;
+class CreatureGroupSlot;
+class CreaturesGroupData;
 class FormationMgr;
 class Creature;
 class FormationData;
+struct FormationEntry;
 typedef std::shared_ptr<FormationEntry> FormationEntrySPtr;
 typedef std::shared_ptr<FormationData> FormationDataSPtr;
 
@@ -44,15 +47,22 @@ typedef std::map<uint32, CreaturesGroupEntrySPtr> CreaturesGroupEntryMap;
 
 // Used to save slot data, key is slot id
 typedef std::shared_ptr<CreatureGroupSlotEntry> CreatureGroupSlotEntrySPtr;
-typedef std::map<uint32, CreatureGroupSlotEntrySPtr> CreatureGroupSlotMap;
-typedef std::shared_ptr<CreatureGroupSlotMap> CreatureGroupSlotMapSPtr;
+typedef std::map<uint32, CreatureGroupSlotEntrySPtr> CreatureGroupStaticSlotMap;
+typedef std::shared_ptr<CreatureGroupStaticSlotMap> CreatureGroupStaticSlotMapSPtr;
 
-// Used to store all creatures group related data for one map, key is creature guid
+// Used to store all static creatures group related data for one map, key is creature guid
 typedef std::map<uint32, CreaturesGroupEntrySPtr> CreatureGroupGuidMap;
 
-// Used to summarize all creatures group for all map. Key is a map id
-typedef std::map<uint32, CreatureGroupGuidMap> CreatureGroupMap;
+// Used to summarize all static creatures group for all map. Key is a map id
+typedef std::map<uint32, CreatureGroupGuidMap> CreatureGroupStaticMap;
 
+// Used to store dynamic data of creatures group
+typedef std::shared_ptr<CreatureGroupSlot> CreatureGroupSlotSPtr;
+typedef std::map<uint32, CreatureGroupSlotSPtr> CreatureGroupSlotMap;
+typedef std::shared_ptr<CreaturesGroupData> CreaturesGroupDataSPtr;
+typedef std::map<uint32, CreaturesGroupDataSPtr> CreaturesGroupMap;
+
+// store static slot info for creatures in group
 struct CreatureGroupSlotEntry
 {
     CreatureGroupSlotEntry(uint32 _slotId, uint32 _creatureGuid, CreaturesGroupEntrySPtr& cEntry) :
@@ -64,6 +74,7 @@ struct CreatureGroupSlotEntry
     CreaturesGroupEntrySPtr creatureGroupEntry;
 };
 
+// used to store group template entry form table group_template
 struct CreraturesGroupTemplateEntry
 {
     CreraturesGroupTemplateEntry(uint32 gId, std::string const& gName) :
@@ -74,16 +85,17 @@ struct CreraturesGroupTemplateEntry
     uint32 id;
 };
 
+// used to store all static data related to an unique group
 struct CreaturesGroupEntry
 {
     CreaturesGroupEntry(uint32 _guid, GroupTemplateEntrySPtr& _groupTemplateEntry, FormationEntrySPtr fEntry = nullptr) :
         groupTemplateEntry(_groupTemplateEntry), guid(_guid), masterSlot(nullptr), formationEntry(fEntry) {}
     CreaturesGroupEntry() = delete;
 
-    CreatureGroupSlotEntrySPtr GetSlotByCreatureGuid(uint32 guid)
+    CreatureGroupSlotEntrySPtr GetSlotEntryByGuid(uint32 guid)
     {
-        auto& result = creatureSlot.find(guid);
-        if (result != creatureSlot.end())
+        auto& result = creatureSlots.find(guid);
+        if (result != creatureSlots.end())
             return result->second;
 
         return nullptr;
@@ -91,7 +103,7 @@ struct CreaturesGroupEntry
 
     uint32 guid;
     CreatureGroupSlotEntrySPtr masterSlot;
-    CreatureGroupSlotMap creatureSlot;
+    CreatureGroupStaticSlotMap creatureSlots;
     GroupTemplateEntrySPtr groupTemplateEntry;
     FormationEntrySPtr formationEntry;
 };

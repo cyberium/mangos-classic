@@ -45,7 +45,7 @@
 #include "Timer.h"
 #include "AI/BaseAI/UnitAI.h"
 #include "Spells/SpellDefines.h"
-#include "Formation/Formation.h"
+#include "CreatureGroup/CreatureGroup.h"
 
 #include <list>
 #include <array>
@@ -2255,10 +2255,10 @@ class Unit : public WorldObject
         void UpdateSplinePosition();
 
         // formation related methods
-        void SetFormationSlot(FormationSlotSPtr& sData) { m_formationSlot = sData; }
-        FormationSlotSPtr GetFormationSlot() { return m_formationSlot; }
-        virtual bool IsFormationMaster() const { return m_formationSlot ? m_formationSlot->IsMasterSlot() : false; }
-        virtual void RemoveFromFormation() { m_formationSlot = nullptr; }
+        void SetGroupSlot(CreatureGroupSlotSPtr& sData) { m_creatureGroupSlot = sData; }
+        CreatureGroupSlotSPtr GetGroupSlot() { return m_creatureGroupSlot; }
+        virtual bool IsFormationMaster() const { return m_creatureGroupSlot ? m_creatureGroupSlot->IsFormationMaster() : false; }
+        virtual void RemoveFromFormation() { m_creatureGroupSlot = nullptr; }
 
     protected:
 
@@ -2378,8 +2378,8 @@ class Unit : public WorldObject
         ObjectGuid const& GetCritterGuid() const { return m_critterGuid; }
         void SetCritterGuid(ObjectGuid critterGuid) { m_critterGuid = critterGuid; }
 
-        // if set it mean that creature is in formation with other creatures
-        FormationSlotSPtr m_formationSlot;
+        // if set, it mean that creature is in group/foramtion with other creatures
+        CreatureGroupSlotSPtr m_creatureGroupSlot;
 
     private:
         void CleanupDeletedAuras();
