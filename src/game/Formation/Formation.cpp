@@ -96,66 +96,11 @@ void FormationMgr::Initialize()
     LoadGroupFormation();
 }
 
-FormationEntrySPtr FormationMgr::GetFormationEntry(uint32 groupId)
-{
-    auto fEntry = m_formationEntries.find(groupId);
-    if (fEntry != m_formationEntries.end())
-        return fEntry->second;
-    return nullptr;
-}
-
-FormationDataSPtr FormationMgr::CreateDynamicFormation(Creature* creatureMaster, GroupFormationType type /*= GROUP_FORMATION_TYPE_SINGLE_FILE*/)
-{
-    FormationDataSPtr fData = nullptr;
-    /*if (creatureMaster->GetGroupSlot() && creatureMaster->GetGroupSlot()->GetFormationData())
-        return creatureMaster->GetGroupSlot()->GetFormationData();
-
-    auto groupData = sCreatureGroupMgr.AddDynamicGroup(creatureMaster);
-    if (groupData)
-    {
-        auto formEmplItr = m_formationEntries.emplace(groupData->guid, new FormationEntry());
-        auto fEntry = formEmplItr.first->second;
-        fEntry->formationId = groupData->guid;
-        fEntry->formationType = type;
-        fEntry->options = 0;
-        fEntry->distance = 1;
-        fEntry->groupTableEntry = nullptr;
-        fData = std::make_shared<FormationData>(groupData, fEntry);
-        groupData->formationData = fData;
-        fData->AddSlot(creatureMaster, fData);
-    }*/
-    return fData;
-}
-
-template<typename T>
-bool FormationMgr::AddMemberToDynGroup(Creature* master, T* entity)
-{
-    if (!master || !entity)
-        return false;
-
-    if (master->GetMapId() != entity->GetMapId())
-        return false;
-
-    /*auto fData = master->GetGroupSlot()->GetFormationData();
-    if (!fData)
-        return false;
-
-    fData->AddSlot(entity, fData);*/
-
-    return true;
-}
-template bool FormationMgr::AddMemberToDynGroup<Creature>(Creature*, Creature*);
-template bool FormationMgr::AddMemberToDynGroup<Player>(Creature*, Player*);
-
-void FormationMgr::Update(FormationDataMap& fDataMap)
-{
-}
-
-FormationData::FormationData(CreaturesGroupDataSPtr& gData, FormationEntrySPtr& fEntry) :
+FormationData::FormationData(CreaturesGroupDataSPtr& gData, FormationEntrySPtr& fEntry, uint32 realMasterGuid) :
     m_groupData(gData), m_fEntry(fEntry), m_currentFormationShape(fEntry->formationType),
     m_masterSlot(nullptr), m_formationEnabled(false), m_mirrorState(false), m_needToFixPositions(false),
     m_keepCompact(false), m_validFormation(true), m_lastWP(0), m_wpPathId(0), m_realMaster(nullptr),
-    m_realMasterGuid(gData->gEntry->masterSlot->defaultCreatureGuid),
+    m_realMasterGuid(realMasterGuid),
     m_masterMotionType(MasterMotionType::FORMATION_TYPE_MASTER_RANDOM),
     m_updateDelay(5000) // enforce first formation update 5 sec after spawning
 {
@@ -178,6 +123,11 @@ void FormationData::SetFollowersMaster()
     for (auto slotItr : m_groupData->creatureSlots)
     {
         auto& currentSlot = slotItr.second;
+
+        // creature might be in group but not in formation
+        if (!currentSlot->GetFoormationSlotData())
+            continue;
+
         if (currentSlot == m_masterSlot)
             continue;
 
@@ -233,12 +183,14 @@ void FormationData::Disband()
     {
         auto& slot = slotItr.second;
 
-        Unit* slotUnit = slot->GetEntity();
-        if (slotUnit && slotUnit->IsAlive())
-        {
-            slotUnit->RemoveFromFormation();
-        }
+        // creature might be in group but not in formation
+        if (!slot->GetFoormationSlotData())
+            continue;
+
+        slot->GetFoormationSlotData().reset();
     }
+
+    m_groupData->formationData = nullptr;
 }
 
 // remove all movegen (maybe we should remove only move in formation one)
@@ -247,6 +199,10 @@ void FormationData::ClearMoveGen()
     for (auto& slotItr : m_groupData->creatureSlots)
     {
         auto& slot = slotItr.second;
+
+        // creature might be in group but not in formation
+        if (!slot->GetFoormationSlotData())
+            continue;
 
         Unit* slotUnit = slot->GetEntity();
         if (slotUnit && slotUnit->IsAlive())
@@ -260,99 +216,6 @@ void FormationData::ClearMoveGen()
         }
     }
 }
-
-/*
-void FormationData::AddSlot(Creature* creature, FormationDataSPtr& fData)
-{
-    / *FormationSlotSPtr sData = nullptr;
-    uint32 slotId = m_slotMap.size();
-    if (!creature->IsTemporarySummon())
-    {
-        auto& slotInfos = fData->GetGroupData()->GetSlotByGuid(creature->GetGUIDLow());
-        if (slotInfos)
-            slotId = slotInfos->GetSlotId();
-    }
-
-    auto existingSlotItr = m_slotMap.find(creature->GetGUIDLow());
-    if (existingSlotItr == m_slotMap.end())
-    {
-        sData = std::make_shared<FormationSlot>(creature, fData);
-        m_slotMap.emplace(slotId, sData);
-    }
-    else
-    {
-        sData = existingSlotItr->second;
-        sData->m_entity = creature;
-    }
-
-    creature->SetFormationSlot(sData);
-    creature->SetActiveObjectState(true);
-
-    sLog.outString("Slot(%u) filled by %s in formation(%u)", slotId, creature->GetGuidStr().c_str(), GetGroupGuid());
-
-    uint32 lowGuid = creature->GetGUIDLow();
-
-    if (!m_realMaster)
-    {
-        if (creature->IsTemporarySummon() || slotId == 0)
-        {
-            m_formationEnabled = true;
-            m_realMaster = creature;
-            m_masterSlot = sData;
-            creature->GetRespawnCoord(m_spawnPos.x, m_spawnPos.y, m_spawnPos.z, nullptr, &m_spawnPos.radius);
-
-            switch (creature->GetDefaultMovementType())
-            {
-                case RANDOM_MOTION_TYPE:
-                    m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_RANDOM;
-                    break;
-                case WAYPOINT_MOTION_TYPE:
-                    m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_WAYPOINT;
-                    break;
-                default:
-                    sLog.outError("FormationData::FillSlot> Master have not recognized default movement type for formation! Forced to random.");
-                    m_masterMotionType = MasterMotionType::FORMATION_TYPE_MASTER_RANDOM;
-                    break;
-            }
-        }
-    }
-
-    if (creature->IsAlive())
-        SetFollowersMaster();
-
-    if (m_masterSlot)
-        FixSlotsPositions();
-    else
-        m_needToFixPositions = true;* /
-}
-
-void FormationData::AddSlot(Player* player, FormationDataSPtr& fData)
-{
-    / *if (!m_realMaster)
-    {
-        sLog.outError("FormationData::AddSlot> cannot add %s to formation(%u). Formation have no master!", player->GetGuidStr().c_str(), GetGroupGuid());
-        return;
-    }
-
-    FormationSlotSPtr sData = nullptr;
-    auto existingSlotItr = m_slotMap.find(player->GetGUIDLow());
-    if (existingSlotItr == m_slotMap.end())
-    {
-        sData = FormationSlotSPtr(new FormationSlot(player, fData));
-        m_slotMap.emplace(player->GetGUIDLow(), sData);
-    }
-    else
-    {
-        sData = existingSlotItr->second;
-        sData->m_entity = player;
-    }
-
-    player->SetFormationSlot(sData);
-
-    sLog.outString("Slot filled by %s in formation(%u)", player->GetGuidStr().c_str(), GetGroupGuid());
-    if (player->IsAlive())
-        SetFollowersMaster();* /
-}*/
 
 Unit* FormationData::GetMaster()
 {
@@ -528,26 +391,21 @@ void FormationData::OnEntityDelete(Unit* entity)
     }
 }
 
-void FormationData::OnSlotAdded(Creature* creature)
+void FormationData::OnSlotAdded(Unit* entity)
 {
     CreatureGroupSlotSPtr sData = nullptr;
-    uint32 slotId = m_groupData->creatureSlots.size();
-    if (!creature->IsTemporarySummon())
-    {
-        auto& slotInfos = m_groupData->GetSlotByGuid(creature->GetGUIDLow());
-        if (slotInfos)
-            slotId = slotInfos->GetSlotId();
-    }
+    sData = m_groupData->GetSlotByGuid(entity->GetGUIDLow());
+    uint32 slotId = sData->GetSlotId();
 
-    creature->SetActiveObjectState(true);
+    entity->SetActiveObjectState(true);
 
-    sLog.outString("Slot(%u) filled by %s in formation(%u)", slotId, creature->GetGuidStr().c_str(), m_groupData->guid);
+    sLog.outString("Slot(%u) filled by %s in formation(%u)", slotId, entity->GetGuidStr().c_str(), m_groupData->guid);
 
-    uint32 lowGuid = creature->GetGUIDLow();
+    Creature* creature = entity->IsCreature() ? static_cast<Creature*>(entity) : nullptr;
 
     if (!m_realMaster)
     {
-        if (creature->IsTemporarySummon() || slotId == 0)
+        if ((creature && creature->IsTemporarySummon()) || slotId == 0)
         {
             m_formationEnabled = true;
             m_realMaster = creature;
@@ -570,7 +428,7 @@ void FormationData::OnSlotAdded(Creature* creature)
         }
     }
 
-    if (creature->IsAlive())
+    if (entity->IsAlive())
         SetFollowersMaster();
 
     if (m_masterSlot)
@@ -620,20 +478,21 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
 {
     float defaultDist =  m_fEntry->distance;
     auto& slots = m_groupData->creatureSlots;
-    float totalMembers = float(slots.size() - 1);
-    if (onlyAlive)
+    float totalMembers = 0;
+    for (auto& slotItr : slots)
     {
-        totalMembers = 0;
-        for (auto& slotItr : slots)
-        {
-            auto& slot = slotItr.second;
-            if (!slot->GetEntity() || !slot->GetEntity()->IsAlive())
-                continue;
+        auto& slot = slotItr.second;
+        // creature might be in group but not in formation
+        if (!slot->GetFoormationSlotData())
+            continue;
 
-            if (slot->IsFormationMaster())
-                continue;
-            ++totalMembers;
-        }
+        if (!slot->GetEntity() || (onlyAlive && !slot->GetEntity()->IsAlive()))
+            continue;
+
+        if (slot->IsFormationMaster())
+            continue;
+
+        ++totalMembers;
     }
 
     if (!totalMembers)
@@ -655,6 +514,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             {
                 auto& slot = slotItr.second;
                 auto& sData = slot->GetFoormationSlotData();
+                if (!sData)     // creature might be in group but not in formation
+                    continue;
+
                 if (slot->IsFormationMaster())
                 {
                     sData->angle = 0;
@@ -680,6 +542,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             {
                 auto& slot = slotItr.second;
                 auto& sData = slot->GetFoormationSlotData();
+                if (!sData)     // creature might be in group but not in formation
+                    continue;
+
                 if (slot->IsFormationMaster())
                 {
                     sData->angle = 0;
@@ -708,6 +573,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             {
                 auto& slot = slotItr.second;
                 auto& sData = slot->GetFoormationSlotData();
+                if (!sData)     // creature might be in group but not in formation
+                    continue;
+
                 if (slot->IsFormationMaster())
                 {
                     sData->angle = 0;
@@ -736,6 +604,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             {
                 auto& slot = slotItr.second;
                 auto& sData = slot->GetFoormationSlotData();
+                if (!sData)     // creature might be in group but not in formation
+                    continue;
+
                 if (slot->IsFormationMaster())
                 {
                     sData->angle = 0;
@@ -761,6 +632,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             {
                 auto& slot = slotItr.second;
                 auto& sData = slot->GetFoormationSlotData();
+                if (!sData)     // creature might be in group but not in formation
+                    continue;
+
                 if (slot->IsFormationMaster())
                 {
                     sData->angle = 0;
@@ -788,6 +662,9 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             {
                 auto& slot = slotItr.second;
                 auto& sData = slot->GetFoormationSlotData();
+                if (!sData)     // creature might be in group but not in formation
+                    continue;
+
                 if (slot->IsFormationMaster())
                 {
                     sData->angle = 0;
@@ -813,6 +690,14 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
     while (slotItr != slots.end())
     {
         auto& slot = slotItr->second;
+
+        auto& sData = slot->GetFoormationSlotData();
+        if (!sData)     // creature might be in group but not in formation
+        {
+            ++slotItr;
+            continue;
+        }
+
         Unit* slotUnit = slot->GetEntity();
         if (slotUnit && slotUnit->IsAlive())
             slot->SetNewPositionRequired();

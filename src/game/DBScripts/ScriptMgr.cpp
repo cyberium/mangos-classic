@@ -785,7 +785,7 @@ void ScriptMgr::LoadScripts(ScriptMapMapName& scripts, const char* tablename)
             {
                 if (tmp.formationData.command == 1 && tmp.formationData.data1 != 0)
                 {
-                    if (!sFormationMgr.GetFormationEntry(tmp.formationData.data1))
+                    if (tmp.formationData.data1 > MAX_GROUP_FORMATION_TYPE)
                     {
                         sLog.outErrorDb("Table `%s` uses invalid formation id(%u) for script id %u.", tablename, tmp.formationData.data1, tmp.id);
                         continue;

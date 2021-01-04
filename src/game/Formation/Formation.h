@@ -35,16 +35,6 @@ public:
 
     void Initialize();
 
-    void SetFormationSlot(Creature* creature);
-    FormationEntrySPtr GetFormationEntry(uint32 groupId);
-
-    FormationDataSPtr CreateDynamicFormation(Creature* creatureMaster, GroupFormationType type = GROUP_FORMATION_TYPE_SINGLE_FILE);
-
-    template <typename T>
-    bool AddMemberToDynGroup(Creature* master, T* entity);
-
-    void Update(FormationDataMap& fDataMap);
-
 private:
     void LoadGroupFormation();
 
@@ -60,7 +50,7 @@ enum class MasterMotionType
 class FormationData
 {
 public:
-    FormationData(CreaturesGroupDataSPtr& gData, FormationEntrySPtr& fEntry);
+    FormationData(CreaturesGroupDataSPtr& gData, FormationEntrySPtr& fEntry, uint32 realMasterGuid);
     FormationData() = delete;
     ~FormationData();
 
@@ -75,7 +65,6 @@ public:
 
     Unit* GetMaster();
     float GetDistance() const { return m_fEntry->distance; }
-    CreatureGroupSlotSPtr GetMasterSlot() { return m_masterSlot; };
     uint32 GetRealMasterGuid() const { return m_realMasterGuid; }
     bool Update(uint32 diff);
     void Reset();
@@ -85,7 +74,7 @@ public:
     void OnDeath(Creature* creature);
     void OnEntityDelete(Unit* entity);
 
-    void OnSlotAdded(Creature* creature);
+    void OnSlotAdded(Unit* entity);
 
     void Replace(Creature* creature, CreatureGroupSlotSPtr slot = nullptr);
     void Compact();

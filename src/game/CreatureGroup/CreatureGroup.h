@@ -20,7 +20,6 @@
 #define CMANGOS_CREATURE_GROUP_H
 
 #include "Common.h"
-#include "CreatureGroupDefs.h"
 #include "Formation/Formation.h"
 
 class CreaturesGroupMgr
@@ -70,7 +69,7 @@ private:
 };
 
 // used to store data of loaded group.
-class CreaturesGroupData
+class CreaturesGroupData : public std::enable_shared_from_this<CreaturesGroupData>
 {
 public:
     CreaturesGroupData(CreaturesGroupEntrySPtr& _groupEntry, FormationDataSPtr fData = nullptr) :
@@ -81,18 +80,14 @@ public:
 
     CreaturesGroupData() = delete;
 
+    CreatureGroupSlotSPtr AddSlot(Creature* newMember, CreatureGroupSlotEntrySPtr slotEntry = nullptr);
+
     bool Update(uint32 diff);
 
     CreatureGroupSlotSPtr GetFirstFreeSlot(uint32 guid);
     CreatureGroupSlotSPtr GetFirstAliveSlot();
-    CreatureGroupSlotSPtr GetSlotByGuid(uint32 guid)
-    {
-        auto& result = creatureSlots.find(guid);
-        if (result != creatureSlots.end())
-            return result->second;
-
-        return nullptr;
-    }
+    CreatureGroupSlotSPtr GetSlotByGuid(uint32 guid);
+    CreatureGroupSlotSPtr GetSlotBySlotId(uint32 slotId);
 
     void OnRespawn(Creature* creature);
     void OnDeath(Creature* creature);
@@ -121,6 +116,7 @@ public:
         m_slotId(slotId), m_currentGuid(creatureGuid), m_gData(gData), m_entity(nullptr),
         m_formationSlotInfo(nullptr) {}
 
+    void SetAsFormationSlot();
     uint32 GetCurrentGuid() const { return m_currentGuid; }
     uint32 GetSlotId() const { return m_slotId; }
 

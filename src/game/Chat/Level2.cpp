@@ -2516,7 +2516,7 @@ bool ChatHandler::HandleNpcFormationAddCommand(char* args)
         master = nearestMaster;
     }
 
-    auto masterSlot = creature->GetGroupSlot();
+    auto masterSlot = master->GetGroupSlot();
     if (!masterSlot || !masterSlot->GetFormationData())
     {
         SendSysMessage("Provided guid for master is not in formation!");
@@ -2530,13 +2530,18 @@ bool ChatHandler::HandleNpcFormationAddCommand(char* args)
     }
 
     auto currSlot = creature->GetGroupSlot();
-    if (!currSlot || !currSlot->GetFormationData())
+    if (currSlot && currSlot->GetFormationData())
     {
         SendSysMessage("Creature is already in formation");
         return true;
     }
 
-    sFormationMgr.AddMemberToDynGroup(master, creature);
+    if (!sCreatureGroupMgr.AddGroupMember(master, creature))
+    {
+        SendSysMessage("Failed to add creature to the formation!");
+        return false;
+    }
+    SendSysMessage("Creature added to the formation");
     return true;
 }
 
@@ -2553,18 +2558,30 @@ bool ChatHandler::HandleNpcFormationCreateCommand(char* args)
     }
 
     auto currSlot = creature->GetGroupSlot();
-    if (!currSlot || !currSlot->GetFormationData())
+    if (currSlot && currSlot->GetFormationData())
     {
-        SendSysMessage("Creature is already in formation");
+        SendSysMessage("Creature is already in formation!");
         return true;
     }
 
-    auto fData = sFormationMgr.CreateDynamicFormation(creature);
-    if (fData)
+    CreaturesGroupDataSPtr gData = nullptr;
+    if (!currSlot)
     {
-        //sFormationMgr.SetFormationSlot(creature);
-        SendSysMessage("Formation is created!");
+        gData = sCreatureGroupMgr.AddDynamicGroup(creature);
+        if (!gData)
+        {
+            SendSysMessage("Failed to create creature group!");
+            return true;
+        }
+        currSlot = creature->GetGroupSlot();
     }
+
+    if (!sCreatureGroupMgr.SetFormationGroup(creature))
+    {
+        SendSysMessage("Failed to create formation!");
+        return true;
+    }
+    SendSysMessage("Formation successfully created.");
     return true;
 
 }
