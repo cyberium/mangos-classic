@@ -20,7 +20,7 @@
 #define CMANGOS_CREATURE_GROUP_H
 
 #include "Common.h"
-#include "Formation/Formation.h"
+#include "Formation.h"
 
 class CreaturesGroupMgr
 {

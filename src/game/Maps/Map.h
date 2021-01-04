@@ -35,7 +35,6 @@
 #include "Entities/CreatureLinkingMgr.h"
 #include "vmap/DynamicTree.h"
 #include "Multithreading/Messager.h"
-#include "Formation/Formation.h"
 #include "CreatureGroup/CreatureGroupDefs.h"
 
 #include <bitset>

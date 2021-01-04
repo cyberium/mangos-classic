@@ -22,7 +22,7 @@
 #include "Common.h"
 #include "Globals/SharedDefines.h"
 #include "MotionGenerators/WaypointManager.h"
-#include "Formation/Formation.h"
+#include "CreatureGroup/CreatureGroupDefs.h"
 
 #include <stack>
 #include <vector>

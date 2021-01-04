@@ -20,7 +20,6 @@
 #define CMANGOS_CREATURE_GROUP_DEFS_H
 
 #include "Common.h"
-#include "Formation/FormationDefs.h"
 
 const uint32 CREATURE_GROUP_FIRST_DYNAMIC_GUID = 0x01FFFFFF;
 

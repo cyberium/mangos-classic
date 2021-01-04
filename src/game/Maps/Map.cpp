@@ -40,7 +40,7 @@
 #include "Chat/Chat.h"
 #include "Weather/Weather.h"
 #include "AI/ScriptDevAI/ScriptDevAIMgr.h"
-#include "Formation/Formation.h"
+#include "CreatureGroup/CreatureGroupDefs.h"
 
 Map::~Map()
 {

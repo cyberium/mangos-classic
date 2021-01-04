@@ -21,7 +21,7 @@
 #include "Database/Database.h"
 #include "Policies/Singleton.h"
 #include "Entities/Creature.h"
-#include "Formation/Formation.h"
+#include "Formation.h"
 
 INSTANTIATE_SINGLETON_1(CreaturesGroupMgr);
 

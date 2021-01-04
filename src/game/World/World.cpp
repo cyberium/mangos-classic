@@ -65,7 +65,6 @@
 #include "Weather/Weather.h"
 #include "Cinematics/CinematicMgr.h"
 #include "World/WorldState.h"
-#include "Formation/Formation.h"
 #include "CreatureGroup/CreatureGroup.h"
 
 #ifdef BUILD_AHBOT

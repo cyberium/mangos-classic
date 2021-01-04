@@ -50,7 +50,7 @@
 
 // apply implementation of the singletons
 #include "Policies/Singleton.h"
-#include "Formation/Formation.h"
+#include "CreatureGroup/CreatureGroup.h"
 
 TrainerSpell const* TrainerSpellData::Find(uint32 spell_id) const
 {

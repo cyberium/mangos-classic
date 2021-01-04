@@ -34,7 +34,7 @@
 #include "Entities/CreatureLinkingMgr.h"
 #include "Entities/Player.h"
 #include "Entities/Pet.h"
-#include "Formation/Formation.h"
+#include "CreatureGroup/CreatureGroup.h"
 #include "Server/DBCStores.h"
 #include "Log.h"
 #include "Metric/Metric.h"
