@@ -127,7 +127,7 @@ public:
     CreaturesGroupDataSPtr GetGroupData() { return m_gData; };
 
     FormationDataSPtr GetFormationData() { return m_gData->formationData; }
-    FormationSlotDataSPtr GetFoormationSlotData() { return m_formationSlotInfo; }
+    FormationSlotDataSPtr GetFormationSlotData() { return m_formationSlotInfo; }
 
     // important for MovGen
     float GetDistance() const { return m_formationSlotInfo->distance; }

@@ -385,7 +385,7 @@ CreatureGroupSlotSPtr CreaturesGroupData::AddSlot(Creature* newMember, CreatureG
         masterSlot = newSlot;
     }
 
-    if (formationData && !newSlot->GetFoormationSlotData())
+    if (formationData && !newSlot->GetFormationSlotData())
     {
         newSlot->SetAsFormationSlot();
     }

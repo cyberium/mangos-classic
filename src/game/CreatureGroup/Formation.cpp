@@ -125,7 +125,7 @@ void FormationData::SetFollowersMaster()
         auto& currentSlot = slotItr.second;
 
         // creature might be in group but not in formation
-        if (!currentSlot->GetFoormationSlotData())
+        if (!currentSlot->GetFormationSlotData())
             continue;
 
         if (currentSlot == m_masterSlot)
@@ -184,10 +184,10 @@ void FormationData::Disband()
         auto& slot = slotItr.second;
 
         // creature might be in group but not in formation
-        if (!slot->GetFoormationSlotData())
+        if (!slot->GetFormationSlotData())
             continue;
 
-        slot->GetFoormationSlotData().reset();
+        slot->GetFormationSlotData().reset();
     }
 
     m_groupData->formationData = nullptr;
@@ -201,7 +201,7 @@ void FormationData::ClearMoveGen()
         auto& slot = slotItr.second;
 
         // creature might be in group but not in formation
-        if (!slot->GetFoormationSlotData())
+        if (!slot->GetFormationSlotData())
             continue;
 
         Unit* slotUnit = slot->GetEntity();
@@ -451,8 +451,8 @@ void FormationData::Replace(Creature* creature, CreatureGroupSlotSPtr slot /*= n
     }
 
     // swap 2 slots positions
-    auto& currSData = creature->GetGroupSlot()->GetFoormationSlotData();
-    auto& slotData = slot->GetFoormationSlotData();
+    auto& currSData = creature->GetGroupSlot()->GetFormationSlotData();
+    auto& slotData = slot->GetFormationSlotData();
 
     float temp = currSData->angle;
     currSData->angle = slotData->angle;
@@ -483,7 +483,7 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
     {
         auto& slot = slotItr.second;
         // creature might be in group but not in formation
-        if (!slot->GetFoormationSlotData())
+        if (!slot->GetFormationSlotData())
             continue;
 
         if (!slot->GetEntity() || (onlyAlive && !slot->GetEntity()->IsAlive()))
@@ -513,7 +513,7 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             for (auto& slotItr : slots)
             {
                 auto& slot = slotItr.second;
-                auto& sData = slot->GetFoormationSlotData();
+                auto& sData = slot->GetFormationSlotData();
                 if (!sData)     // creature might be in group but not in formation
                     continue;
 
@@ -541,7 +541,7 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             for (auto& slotItr : slots)
             {
                 auto& slot = slotItr.second;
-                auto& sData = slot->GetFoormationSlotData();
+                auto& sData = slot->GetFormationSlotData();
                 if (!sData)     // creature might be in group but not in formation
                     continue;
 
@@ -572,7 +572,7 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             for (auto& slotItr : slots)
             {
                 auto& slot = slotItr.second;
-                auto& sData = slot->GetFoormationSlotData();
+                auto& sData = slot->GetFormationSlotData();
                 if (!sData)     // creature might be in group but not in formation
                     continue;
 
@@ -603,7 +603,7 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             for (auto& slotItr : slots)
             {
                 auto& slot = slotItr.second;
-                auto& sData = slot->GetFoormationSlotData();
+                auto& sData = slot->GetFormationSlotData();
                 if (!sData)     // creature might be in group but not in formation
                     continue;
 
@@ -631,7 +631,7 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             for (auto& slotItr : slots)
             {
                 auto& slot = slotItr.second;
-                auto& sData = slot->GetFoormationSlotData();
+                auto& sData = slot->GetFormationSlotData();
                 if (!sData)     // creature might be in group but not in formation
                     continue;
 
@@ -661,7 +661,7 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
             for (auto& slotItr : slots)
             {
                 auto& slot = slotItr.second;
-                auto& sData = slot->GetFoormationSlotData();
+                auto& sData = slot->GetFormationSlotData();
                 if (!sData)     // creature might be in group but not in formation
                     continue;
 
@@ -691,7 +691,7 @@ void FormationData::FixSlotsPositions(bool onlyAlive /*= false*/)
     {
         auto& slot = slotItr->second;
 
-        auto& sData = slot->GetFoormationSlotData();
+        auto& sData = slot->GetFormationSlotData();
         if (!sData)     // creature might be in group but not in formation
         {
             ++slotItr;
