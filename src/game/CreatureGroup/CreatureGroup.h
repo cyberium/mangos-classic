@@ -46,8 +46,18 @@ public:
         return nullptr;
     }
 
+    // set creature slot so we can know that its part of a group
+    // group should exist in db with creature guid as group member
     void SetGroupSlot(Creature* creature);
+
+    // dynamically add a creature group with provided creature as master
     CreaturesGroupDataSPtr AddDynamicGroup(Creature* creatureMaster);
+
+    // dynamically add a member to an existing group
+    CreaturesGroupDataSPtr AddGroupMember(Creature* creatureMaster, Creature* newMember);
+
+    // add a formation to a group
+    bool SetFormationGroup(Creature* creatureMaster, GroupFormationType type = GROUP_FORMATION_TYPE_SINGLE_FILE);
 
 private:
     GroupTemplateEntryMap m_groupTemplateEntries;
@@ -124,7 +134,7 @@ public:
     FormationSlotDataSPtr GetFoormationSlotData() { return m_formationSlotInfo; }
 
     // important for MovGen
-    float GetDistance() const { return m_gData->formationData->GetDistance(); }
+    float GetDistance() const { return m_formationSlotInfo->distance; }
     float GetAngle() const;
     Unit* GetEntity() { return m_entity; }
     void SetNewPositionRequired() { m_formationSlotInfo->recomputePosition = true; }
