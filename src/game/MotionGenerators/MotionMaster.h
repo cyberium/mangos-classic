@@ -51,28 +51,29 @@ enum MovementGeneratorType
     RANDOM_MOTION_TYPE              = 1,                    // RandomMovementGenerator.h
     WAYPOINT_MOTION_TYPE            = 2,                    // WaypointMovementGenerator.h
     PATH_MOTION_TYPE                = 3,                    // PathMovementGenerator.h
+    LINEAR_WP_MOTION_TYPE           = 4,                    // WaypointMovementGenerator.h
 
-    MAX_DB_MOTION_TYPE              = 4,                    // *** this and below motion types can't be set in DB.
+    MAX_DB_MOTION_TYPE              = 5,                    // *** this and below motion types can't be set in DB.
 
-    DISTRACT_MOTION_TYPE            = 4,                    // IdleMovementGenerator.h
-    STAY_MOTION_TYPE                = 5,                    // PointMovementGenerator.h
-    FOLLOW_MOTION_TYPE              = 6,                    // TargetedMovementGenerator.h
-    CHASE_MOTION_TYPE               = 7,                    // TargetedMovementGenerator.h
-    RETREAT_MOTION_TYPE             = 8,                    // PointMovementGenerator.h
-    TIMED_FLEEING_MOTION_TYPE       = 9,                    // RandomMovementGenerator.h
-    POINT_MOTION_TYPE               = 10,                   // PointMovementGenerator.h
-    HOME_MOTION_TYPE                = 11,                   // HomeMovementGenerator.h
-    FLEEING_MOTION_TYPE             = 12,                   // RandomMovementGenerator.h
-    CONFUSED_MOTION_TYPE            = 13,                   // RandomMovementGenerator.h
-    EFFECT_MOTION_TYPE              = 14,                   // WrapperMovementGenerator.h
-    TAXI_MOTION_TYPE                = 15,                   // WaypointMovementGenerator.h
-    TIMED_RANDOM_MOTION_TYPE        = 16,                   // RandomMovementGenerator.h
+    DISTRACT_MOTION_TYPE            = 5,                    // IdleMovementGenerator.h
+    STAY_MOTION_TYPE                = 6,                    // PointMovementGenerator.h
+    FOLLOW_MOTION_TYPE              = 7,                    // TargetedMovementGenerator.h
+    CHASE_MOTION_TYPE               = 8,                    // TargetedMovementGenerator.h
+    RETREAT_MOTION_TYPE             = 9,                    // PointMovementGenerator.h
+    TIMED_FLEEING_MOTION_TYPE       = 10,                   // RandomMovementGenerator.h
+    POINT_MOTION_TYPE               = 11,                   // PointMovementGenerator.h
+    HOME_MOTION_TYPE                = 12,                   // HomeMovementGenerator.h
+    FLEEING_MOTION_TYPE             = 13,                   // RandomMovementGenerator.h
+    CONFUSED_MOTION_TYPE            = 14,                   // RandomMovementGenerator.h
+    EFFECT_MOTION_TYPE              = 15,                   // WrapperMovementGenerator.h
+    TAXI_MOTION_TYPE                = 16,                   // WaypointMovementGenerator.h
+    TIMED_RANDOM_MOTION_TYPE        = 17,                   // RandomMovementGenerator.h
 
-    EXTERNAL_WAYPOINT_MOVE          = 17,                   // Only used in UnitAI::MovementInform when a waypoint is reached. The pathId >= 0 is added as additonal value
-    EXTERNAL_WAYPOINT_MOVE_START    = 18,                   // Only used in UnitAI::MovementInform when a waypoint is started. The pathId >= 0 is added as additional value
-    EXTERNAL_WAYPOINT_FINISHED_LAST = 19,                   // Only used in UnitAI::MovementInform when the waittime of the last wp is finished The pathId >= 0 is added as additional value
+    EXTERNAL_WAYPOINT_MOVE          = 18,                   // Only used in UnitAI::MovementInform when a waypoint is reached. The pathId >= 0 is added as additonal value
+    EXTERNAL_WAYPOINT_MOVE_START    = 19,                   // Only used in UnitAI::MovementInform when a waypoint is started. The pathId >= 0 is added as additional value
+    EXTERNAL_WAYPOINT_FINISHED_LAST = 20,                   // Only used in UnitAI::MovementInform when the waittime of the last wp is finished The pathId >= 0 is added as additional value
 
-    FORMATION_MOTION_TYPE           = 20,                   // TargetedMovementGenerator.h
+    FORMATION_MOTION_TYPE           = 21,                   // TargetedMovementGenerator.h
 };
 
 enum MMCleanFlag

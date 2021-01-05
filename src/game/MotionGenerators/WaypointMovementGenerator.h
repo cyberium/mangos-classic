@@ -93,6 +93,10 @@ class WaypointMovementGenerator<Creature>
         void AddToWaypointPauseTime(int32 waitTimeDiff, bool force = false);
         bool SetNextWaypoint(uint32 pointId);
 
+    protected:
+        virtual void SwitchToNextNode(Creature& creature, WaypointPath::const_iterator& nodeItr);
+        virtual bool GetNodeAfter(WaypointPath::const_iterator& nodeItr);
+
     private:
         void LoadPath(Creature& creature, int32 pathId, WaypointPathOrigin wpOrigin, uint32 overwriteEntry, uint32 overwriteGuid);
         uint32 BuildIntPath(Movement::PointsArray& path, Creature& creature, G3D::Vector3 const& endPos) const;
@@ -115,6 +119,25 @@ class WaypointMovementGenerator<Creature>
         int32 m_pathDuration;
         std::list<int32> m_nodeIndexes;
         WaypointPathOrigin m_PathOrigin;
+};
+
+template<class T>
+class LinearWPMovementGenerator;
+
+template<>
+class LinearWPMovementGenerator<Creature> : public WaypointMovementGenerator<Creature>
+{
+public:
+    LinearWPMovementGenerator(Creature& creature) : WaypointMovementGenerator(creature), m_driveWayBack(false)
+    {}
+
+    MovementGeneratorType GetMovementGeneratorType() const override { return LINEAR_WP_MOTION_TYPE; }
+
+private:
+    void SwitchToNextNode(Creature& creature, WaypointPath::const_iterator& nodeItr) override;
+    bool GetNodeAfter(WaypointPath::const_iterator& nodeItr) override;
+
+    bool m_driveWayBack;
 };
 
 #endif
