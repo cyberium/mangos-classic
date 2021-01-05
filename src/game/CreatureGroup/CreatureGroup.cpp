@@ -481,6 +481,18 @@ void CreaturesGroupData::OnEntityDelete(Unit* entity)
     }
 }
 
+void CreaturesGroupData::OnWaypointStart()
+{
+    if (formationData)
+        formationData->OnWaypointStart();
+}
+
+void CreaturesGroupData::OnWaypointEnd()
+{
+    if (formationData)
+        formationData->OnWaypointEnd();
+}
+
 void CreatureGroupSlot::SetAsFormationSlot()
 {
     // we can reserve some more memory space for formation specific slot data

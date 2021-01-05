@@ -437,6 +437,17 @@ void FormationData::OnSlotAdded(Unit* entity)
         m_needToFixPositions = true;
 }
 
+void FormationData::OnWaypointStart()
+{
+    SetMirrorState(false);
+}
+
+void FormationData::OnWaypointEnd()
+{
+    SetMirrorState(true);
+}
+
+
 // replace to either first available slot position or provided one
 void FormationData::Replace(Creature* creature, CreatureGroupSlotSPtr slot /*= nullptr*/)
 {

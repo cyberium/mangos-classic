@@ -92,6 +92,8 @@ public:
     void OnRespawn(Creature* creature);
     void OnDeath(Creature* creature);
     void OnEntityDelete(Unit* entity);
+    void OnWaypointStart();
+    void OnWaypointEnd();
 
     uint32 guid;
     CreaturesGroupEntrySPtr gEntry;

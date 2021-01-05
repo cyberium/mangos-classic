@@ -119,6 +119,8 @@ public:
     void OnEntityDelete(Unit* entity);
 
     void OnSlotAdded(Unit* entity);
+	void OnWaypointStart();
+	void OnWaypointEnd();
 
     void Replace(Creature* creature, CreatureGroupSlotSPtr slot = nullptr);
     void Compact();
