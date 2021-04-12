@@ -18,6 +18,11 @@ jobs:
         with:
           path: ${{env.REPO_DIR}}
 
+      - name: Update Homebrew
+        run: |
+          brew update
+          brew upgrade
+
       - name: Install dependencies
         run: |
           brew install boost mysql-client
