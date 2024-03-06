@@ -87,6 +87,15 @@ if(MSVC)
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 endif()
 
+# Enable cmake parrallel build
+include(ProcessorCount)
+ProcessorCount(PROCESSOR_COUNT)
+message(STATUS "Detected ${PROCESSOR_COUNT} CPU cores.")
+if(PROCESSOR_COUNT LESS_EQUAL 0)
+  message(FATAL_ERROR "Unable to determine the number of CPU cores.")
+else()
+  set(CMAKE_BUILD_PARALLEL_LEVEL ${PROCESSOR_COUNT})
+endif()
 # set default buildoptions and print them
 include(cmake/options.cmake)
 
